@@ -46,7 +46,7 @@ class VertexTest(unittest.TestCase):
     def test_walk(self):
         processor = TestProcessor(20, 3)
         for i in range(1, 10):
-            vertex = TestVertex(i).walk(processor)
+            TestVertex(i).walk(processor)
         self.assertEqual(len(processor.all_summands), 4)
 
 
