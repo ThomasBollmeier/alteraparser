@@ -1,7 +1,11 @@
 from .processor import ProcessingResult
+from .clonable import Clonable
 
 
-class AbstractVertex(object):
+class AbstractVertex(Clonable):
+
+    def __init__(self):
+        Clonable.__init__(self)
 
     def num_successors(self):
         raise NotImplemented

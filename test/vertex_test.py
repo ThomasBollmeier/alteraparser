@@ -5,7 +5,8 @@ from alteraparser.syntaxgraph.processor import Processor, ProcessingResult
 
 class TestVertex(AbstractVertex):
 
-    def __init__(self, num):
+    def __init__(self, num=None):
+        AbstractVertex.__init__(self)
         self.num = num
 
     def num_successors(self):
@@ -16,6 +17,9 @@ class TestVertex(AbstractVertex):
             return TestVertex(idx+1)
         else:
             return None
+
+    def _on_clone_creation(self, original):
+        self.num = original.num
 
 
 class TestProcessor(Processor):
@@ -48,6 +52,13 @@ class VertexTest(unittest.TestCase):
         for i in range(1, 10):
             TestVertex(i).walk(processor)
         self.assertEqual(len(processor.all_summands), 4)
+
+    def test_clone(self):
+        original = TestVertex(42)
+        copy = original.clone()
+        self.assertTrue(isinstance(copy, TestVertex))
+        self.assertNotEqual(original, copy)
+        self.assertEqual(original.num, copy.num)
 
 
 if __name__ == "__main__":
