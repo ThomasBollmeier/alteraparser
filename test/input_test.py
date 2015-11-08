@@ -1,0 +1,25 @@
+import unittest
+from alteraparser.io.string_input import StringInput
+
+
+class StringInputTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_iteration(self):
+        data_in = StringInput('Test')
+        self.assertTrue(data_in.has_next_char())
+        self.assertEqual(data_in.get_next_char(), 'T')
+        self.assertEqual(data_in.get_next_char(), 'e')
+        self.assertEqual(data_in.get_next_char(), 's')
+        self.assertEqual(data_in.get_next_char(), 't')
+        self.assertFalse(data_in.has_next_char())
+
+
+if __name__ == "__main__":
+
+    unittest.main()

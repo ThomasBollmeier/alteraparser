@@ -1,0 +1,64 @@
+from .processor import Processor, ProcessingResult
+from .vertex import VertexCategory
+
+
+class MatchFinder(Processor):
+
+    def __init__(self, input):
+        self.__path = []
+        self.__input = input
+        self.__buffer = []
+        self.__eof_input = False
+        self.__match_char = None
+
+    def process(self, vertex, path):
+        if not self.__eof_input:
+            if self.__match_char is None:
+                self.__match_char = self.__get_next_char()
+            if self.__match_char is None:
+                self.__eof_input = True
+        if not self.__eof_input:
+            return self.__process_with_char_search(vertex)
+        else:
+            return self.__process_without_char_search(vertex)
+
+    def undo(self, vertex, path):
+        if not self.__path:
+            return
+        v, ch = self.__path[-1]
+        if vertex is v:
+            self.__path.pop()
+            if ch is not None:
+                self.__buffer.append(ch)
+
+    def get_path(self):
+        return self.__path
+    path = property(get_path)
+
+    def __process_with_char_search(self, vertex):
+        if vertex.get_category() == VertexCategory.MATCHER:
+            if vertex.matches(self.__match_char):
+                self.__path.append((vertex, self.__match_char))
+                self.__match_char = None
+                return ProcessingResult.CONTINUE
+            else:
+                return ProcessingResult.GO_BACK
+        else:
+            self.__path.append((vertex, None))
+            return ProcessingResult.CONTINUE
+
+    def __process_without_char_search(self, vertex):
+        if vertex.get_category() == VertexCategory.MATCHER:
+            return ProcessingResult.GO_BACK
+        else:
+            self.__path.append((vertex, None))
+            return ProcessingResult.CONTINUE
+
+    def __get_next_char(self):
+        if self.__buffer:
+            return self.__buffer.pop()
+        else:
+            if self.__input.has_next_char():
+                return self.__input.get_next_char()
+            else:
+                return None

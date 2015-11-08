@@ -1,13 +1,15 @@
 from .dockable import Dockable
 from .clonable import Clonable
-from .vertex import Vertex
+from .vertex import Vertex, VertexCategory
 
 
 class StartVertex(Vertex):
 
     def __init__(self, vertex_group):
-        Vertex.__init__(self)
+        Vertex.__init__(self, VertexCategory.GROUP_START)
         self.__group = vertex_group
+        self.name = None
+        self.id = None
 
     def num_successors(self):
         if not self.__group._VertexGroup__expanded:
@@ -20,12 +22,26 @@ class StartVertex(Vertex):
         return Vertex.nth_successor(self, idx)
 
 
+class EndVertex(Vertex):
+
+    def __init__(self):
+        Vertex.__init__(self, VertexCategory.GROUP_END)
+
+
 class VertexGroup(Dockable, Clonable):
 
     def __init__(self):
         self.__expanded = False
         self.__start = StartVertex(self)
-        self.__end = Vertex()
+        self.__end = EndVertex()
+
+    def set_name(self, name):
+        self.__start.name = name
+        return self
+
+    def set_id(self, id):
+        self.__start.id = id
+        return self
 
     def connect(self, dockable):
         self.__end.connect(dockable)
@@ -43,14 +59,18 @@ class VertexGroup(Dockable, Clonable):
         pass
 
     def _on_clone_creation(self, original):
-        pass
+        self.__start.name = original.__start.name
+        self.__start.id = original.__start.id
 
 
 class Multiples(VertexGroup):
 
     def __init__(self, element=None, min_occur=0, max_occur=None):
         VertexGroup.__init__(self)
-        self.__element = element
+        if element:
+            self.__element = element.clone()
+        else:
+            self.__element = None
         self.__min_occur = min_occur
         self.__max_occur = max_occur
 
@@ -58,17 +78,20 @@ class Multiples(VertexGroup):
         current = start
         for _ in range(self.__min_occur):
             current = current.connect(self.__element.clone())
-        current.connect(end)
+        min_end = current
         if self.__max_occur is None:
             if current is not start:
                 current.connect(current)
             else:
-                start.connect(self.__element.clone()).connect(start)
+                elem = self.__element.clone()
+                start.connect(elem).connect(start)
+                elem.connect(end)
         else:
             delta = self.__max_occur - self.__min_occur
             for _ in range(delta):
                 current = current.connect(self.__element.clone())
                 current.connect(end)
+        min_end.connect(end)
 
     def _on_clone_creation(self, original):
         VertexGroup._on_clone_creation(self, original)
@@ -84,7 +107,7 @@ class Branches(VertexGroup):
         self.__branches = []
 
     def add_branch(self, elements):
-        self.__branches.append(elements)
+        self.__branches.append([el.clone() for el in elements])
 
     def _on_expand(self, start, end):
         for branch in self.__branches:

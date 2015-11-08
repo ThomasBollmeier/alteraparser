@@ -2,11 +2,23 @@ from .abstract_vertex import AbstractVertex
 from .dockable import Dockable
 
 
+class VertexCategory:
+
+    NORMAL = 1
+    GROUP_START = 2
+    GROUP_END = 3
+    MATCHER = 4
+
+
 class Vertex(AbstractVertex, Dockable):
 
-    def __init__(self):
+    def __init__(self, category = VertexCategory.NORMAL):
         AbstractVertex.__init__(self)
         self.__successors = []
+        self._category = category
+
+    def get_category(self):
+        return self._category
 
     def num_successors(self):
         return len(self.__successors)

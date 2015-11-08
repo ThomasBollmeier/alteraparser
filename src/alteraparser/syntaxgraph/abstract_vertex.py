@@ -16,6 +16,7 @@ class AbstractVertex(Clonable):
     def walk(self, processor):
         path = []
         current = self
+        result = None
         while True:
             result = processor.process(current, path)
             if result in [ProcessingResult.CONTINUE, None]:
@@ -29,6 +30,7 @@ class AbstractVertex(Clonable):
             if next is None:
                 break
             current = next
+        return result
 
     @staticmethod
     def __continue(current, path):
