@@ -8,6 +8,7 @@ class VertexCategory:
     GROUP_START = 2
     GROUP_END = 3
     MATCHER = 4
+    FINAL = 5
 
 
 class Vertex(AbstractVertex, Dockable):

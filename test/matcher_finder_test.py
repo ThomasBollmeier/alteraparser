@@ -3,6 +3,7 @@ from alteraparser.io.string_input import StringInput
 from alteraparser.syntaxgraph.match_finder import MatchFinder
 from alteraparser.syntaxgraph.vertex_group import optional, one_to_many, many, fork
 from alteraparser.syntaxgraph.vertex import VertexCategory
+from alteraparser.syntaxgraph.final_vertex import FinalVertex
 from alteraparser.syntaxgraph.matcher_vertex import single_char, char_range, characters
 
 
@@ -16,7 +17,8 @@ class MatchFinderTest(unittest.TestCase):
         self.grammar = fork([alpha,
                              many(fork(
                                  [alpha_num],
-                                 [dash, alpha_num]))]).set_name('var')
+                                 [dash, alpha_num])),
+                             FinalVertex()]).set_name('var')
 
     def tearDown(self):
         pass
@@ -27,7 +29,14 @@ class MatchFinderTest(unittest.TestCase):
         self.grammar.get_dock_vertex().walk(finder)
         act = self._path_repr(finder.path)
         exp = '<var>this<sep>-</sep>is<sep>-</sep>a<sep>-</sep>test</var>'
-        self.assertEqual(act, exp)
+        self.assertEqual(exp, act)
+
+        data_in = StringInput('not-allowed-')
+        finder = MatchFinder(data_in)
+        self.grammar.get_dock_vertex().walk(finder)
+        act = self._path_repr(finder.path)
+        exp = ''
+        self.assertEqual(exp, act)
 
     @staticmethod
     def _path_repr(path):

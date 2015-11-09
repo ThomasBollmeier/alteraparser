@@ -8,16 +8,12 @@ class MatchFinder(Processor):
         self.__path = []
         self.__input = input
         self.__buffer = []
-        self.__eof_input = False
         self.__match_char = None
 
     def process(self, vertex, path):
-        if not self.__eof_input:
-            if self.__match_char is None:
-                self.__match_char = self.__get_next_char()
-            if self.__match_char is None:
-                self.__eof_input = True
-        if not self.__eof_input:
+        if not self.__match_char:
+            self.__match_char = self.__get_next_char()
+        if self.__match_char:
             return self.__process_with_char_search(vertex)
         else:
             return self.__process_without_char_search(vertex)
@@ -29,6 +25,9 @@ class MatchFinder(Processor):
         if vertex is v:
             self.__path.pop()
             if ch is not None:
+                if self.__match_char:
+                    self.__buffer.append(self.__match_char)
+                    self.__match_char = None
                 self.__buffer.append(ch)
 
     def get_path(self):
@@ -36,19 +35,23 @@ class MatchFinder(Processor):
     path = property(get_path)
 
     def __process_with_char_search(self, vertex):
-        if vertex.get_category() == VertexCategory.MATCHER:
+        catg = vertex.get_category()
+        if catg == VertexCategory.MATCHER:
             if vertex.matches(self.__match_char):
                 self.__path.append((vertex, self.__match_char))
                 self.__match_char = None
                 return ProcessingResult.CONTINUE
             else:
                 return ProcessingResult.GO_BACK
+        elif catg == VertexCategory.FINAL:
+            return ProcessingResult.GO_BACK
         else:
             self.__path.append((vertex, None))
             return ProcessingResult.CONTINUE
 
     def __process_without_char_search(self, vertex):
-        if vertex.get_category() == VertexCategory.MATCHER:
+        catg = vertex.get_category()
+        if catg == VertexCategory.MATCHER:
             return ProcessingResult.GO_BACK
         else:
             self.__path.append((vertex, None))
