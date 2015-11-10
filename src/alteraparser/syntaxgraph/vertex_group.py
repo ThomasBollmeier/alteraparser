@@ -26,6 +26,8 @@ class EndVertex(Vertex):
 
     def __init__(self):
         Vertex.__init__(self, VertexCategory.GROUP_END)
+        self.name = ''
+        self.id = ''
 
 
 class VertexGroup(Dockable, Clonable):
@@ -37,11 +39,23 @@ class VertexGroup(Dockable, Clonable):
 
     def set_name(self, name):
         self.__start.name = name
+        self.__end.name = name
         return self
+
+    def get_name(self):
+        return self.__start.name
+
+    name = property(get_name, set_name)
 
     def set_id(self, id):
         self.__start.id = id
+        self.__end.id = id
         return self
+
+    def get_id(self):
+        return self.__start.id
+
+    id = property(get_id, set_id)
 
     def connect(self, dockable):
         self.__end.connect(dockable)
@@ -52,15 +66,19 @@ class VertexGroup(Dockable, Clonable):
 
     def expand(self):
         if not self.__expanded:
-            self._on_expand(self.__start, self.__end)
+            start = Vertex()
+            end = Vertex()
+            self.__start.connect(start)
+            end.connect(self.__end)
+            self._on_expand(start, end)
             self.__expanded = True
 
     def _on_expand(self, start, end):
         pass
 
     def _on_clone_creation(self, original):
-        self.__start.name = original.__start.name
-        self.__start.id = original.__start.id
+        self.__start.name = self.__end.name = original.__start.name
+        self.__start.id = self.__end.id = original.__start.id
 
 
 class Multiples(VertexGroup):
@@ -119,22 +137,3 @@ class Branches(VertexGroup):
     def _on_clone_creation(self, original):
         VertexGroup._on_clone_creation(self, original)
         self.__branches = [[el.clone() for el in orig_branch] for orig_branch in original.__branches]
-
-
-def optional(element):
-    return Multiples(element, max_occur=1)
-
-
-def many(element):
-    return Multiples(element)
-
-
-def one_to_many(element):
-    return Multiples(element, min_occur=1)
-
-
-def fork(*branches):
-    res = Branches()
-    for branch in branches:
-        res.add_branch(branch)
-    return res

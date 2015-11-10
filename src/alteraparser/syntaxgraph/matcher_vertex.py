@@ -27,14 +27,3 @@ class MatcherVertex(Vertex):
         self.__chars = set(original.__chars)
         self.__negated = original.__negated
 
-
-def single_char(ch):
-    return MatcherVertex([ch])
-
-
-def char_range(ch_from, ch_to):
-    return MatcherVertex([chr(i) for i in range(ord(ch_from), ord(ch_to) + 1)])
-
-
-def characters(*chars):
-    return MatcherVertex(chars)

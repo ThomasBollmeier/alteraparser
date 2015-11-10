@@ -53,6 +53,8 @@ class MatchFinder(Processor):
         catg = vertex.get_category()
         if catg == VertexCategory.MATCHER:
             return ProcessingResult.GO_BACK
+        elif catg == VertexCategory.FINAL:
+            return ProcessingResult.STOP
         else:
             self.__path.append((vertex, None))
             return ProcessingResult.CONTINUE

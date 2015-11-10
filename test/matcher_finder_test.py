@@ -1,10 +1,8 @@
 import unittest
 from alteraparser.io.string_input import StringInput
 from alteraparser.syntaxgraph.match_finder import MatchFinder
-from alteraparser.syntaxgraph.vertex_group import optional, one_to_many, many, fork
-from alteraparser.syntaxgraph.vertex import VertexCategory
-from alteraparser.syntaxgraph.final_vertex import FinalVertex
-from alteraparser.syntaxgraph.matcher_vertex import single_char, char_range, characters
+from alteraparser.api import char_range, fork, many, single_char, keyword, \
+    characters, one_to_many, optional, grammar
 
 
 class MatchFinderTest(unittest.TestCase):
@@ -14,11 +12,13 @@ class MatchFinderTest(unittest.TestCase):
         num = char_range('0', '9')
         alpha_num = fork([alpha], [num])
         dash = fork([single_char('-')]).set_name('sep')
-        self.grammar = fork([alpha,
-                             many(fork(
-                                 [alpha_num],
-                                 [dash, alpha_num])),
-                             FinalVertex()]).set_name('var')
+        self.grammar = grammar([
+            fork([
+                alpha,
+                many(fork(
+                    [alpha_num],
+                    [dash, alpha_num]))
+            ]).set_name('var')])
 
     def tearDown(self):
         pass
@@ -38,20 +38,46 @@ class MatchFinderTest(unittest.TestCase):
         exp = ''
         self.assertEqual(exp, act)
 
+    def test_keyword_match(self):
+        wspace = one_to_many(characters(' ', '\t', '\n')).set_name('ws')
+        alpha = char_range('a', 'z')
+        num = char_range('0', '9')
+        alpha_num = fork([alpha], [num])
+        dash = single_char('-')
+        brace_open = single_char('{')
+        brace_close = single_char('}')
+        var_name = fork([alpha,
+                        many(fork([alpha_num],
+                                  [dash, alpha_num]))]).set_name('name')
+        class_ = keyword('CLASS')
+        class_expr = fork([class_,
+                        wspace,
+                        var_name,
+                        wspace,
+                        brace_open,
+                        optional(wspace),
+                        brace_close]).set_name('class')
+        class_grammar = grammar([class_expr])
+
+        code = 'CLASS  my-test {\n}'
+        finder = MatchFinder(StringInput(code))
+        class_grammar.get_dock_vertex().walk(finder)
+
+        exp = '<class>CLASS<ws>  </ws><name>my-test</name><ws> </ws>{<ws>\n</ws>}</class>'
+        act = self._path_repr(finder.path)
+        self.assertEqual(exp, act)
+
+
     @staticmethod
     def _path_repr(path):
         res = ''
-        stack = []
         for vertex, ch in path:
-            catg = vertex.get_category()
-            if catg == VertexCategory.GROUP_START:
+            if vertex.is_group_start():
                 if vertex.name:
                     res += '<' + vertex.name + '>'
-                stack.append(vertex.name)
-            elif catg == VertexCategory.GROUP_END and stack:
-                name = stack.pop()
-                if name:
-                    res += '</' + name + '>'
+            elif vertex.is_group_end():
+                if vertex.name:
+                    res += '</' + vertex.name + '>'
             if ch is not None:
                 res += ch
         return res

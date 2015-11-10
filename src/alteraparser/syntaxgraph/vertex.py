@@ -21,6 +21,21 @@ class Vertex(AbstractVertex, Dockable):
     def get_category(self):
         return self._category
 
+    def is_normal(self):
+        return self._category == VertexCategory.NORMAL
+
+    def is_group_start(self):
+        return self._category == VertexCategory.GROUP_START
+
+    def is_group_end(self):
+        return self._category == VertexCategory.GROUP_END
+
+    def is_matcher(self):
+        return self._category == VertexCategory.MATCHER
+
+    def is_final(self):
+        return self._category == VertexCategory.FINAL
+
     def num_successors(self):
         return len(self.__successors)
 
