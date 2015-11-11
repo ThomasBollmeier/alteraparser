@@ -12,13 +12,12 @@ class MatchFinderTest(unittest.TestCase):
         num = char_range('0', '9')
         alpha_num = fork([alpha], [num])
         dash = fork([single_char('-')]).set_name('sep')
-        self.grammar = grammar([
+        self.grammar = grammar('var', [
             fork([
                 alpha,
                 many(fork(
                     [alpha_num],
-                    [dash, alpha_num]))
-            ]).set_name('var')])
+                    [dash, alpha_num]))])])
 
     def tearDown(self):
         pass
@@ -39,7 +38,7 @@ class MatchFinderTest(unittest.TestCase):
         self.assertEqual(exp, act)
 
     def test_keyword_match(self):
-        wspace = one_to_many(characters(' ', '\t', '\n')).set_name('ws')
+        wspace = one_to_many(characters(' ', '\t', '\n')).set_name('ws').set_ignore()
         alpha = char_range('a', 'z')
         num = char_range('0', '9')
         alpha_num = fork([alpha], [num])
@@ -51,19 +50,19 @@ class MatchFinderTest(unittest.TestCase):
                                   [dash, alpha_num]))]).set_name('name')
         class_ = keyword('CLASS')
         class_expr = fork([class_,
-                        wspace,
-                        var_name,
-                        wspace,
-                        brace_open,
-                        optional(wspace),
-                        brace_close]).set_name('class')
-        class_grammar = grammar([class_expr])
+                           wspace,
+                           var_name,
+                           wspace,
+                           brace_open,
+                           optional(wspace),
+                           brace_close])
+        class_grammar = grammar('class', [class_expr])
 
         code = 'CLASS  my-test {\n}'
         finder = MatchFinder(StringInput(code))
         class_grammar.get_dock_vertex().walk(finder)
 
-        exp = '<class>CLASS<ws>  </ws><name>my-test</name><ws> </ws>{<ws>\n</ws>}</class>'
+        exp = '<class>CLASS<name>my-test</name>{}</class>'
         act = self._path_repr(finder.path)
         self.assertEqual(exp, act)
 
@@ -71,14 +70,19 @@ class MatchFinderTest(unittest.TestCase):
     @staticmethod
     def _path_repr(path):
         res = ''
+        ignore_mode = False
         for vertex, ch in path:
             if vertex.is_group_start():
-                if vertex.name:
+                if vertex.ignore:
+                    ignore_mode = True
+                elif vertex.name:
                     res += '<' + vertex.name + '>'
             elif vertex.is_group_end():
-                if vertex.name:
+                if vertex.ignore:
+                    ignore_mode = False
+                elif vertex.name:
                     res += '</' + vertex.name + '>'
-            if ch is not None:
+            if ch is not None and not ignore_mode:
                 res += ch
         return res
 
