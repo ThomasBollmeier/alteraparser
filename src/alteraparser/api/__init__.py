@@ -15,6 +15,15 @@ def one_to_many(element):
     return Multiples(element, min_occur=1)
 
 
+def seq(sep, *elements):
+    new_elements = []
+    for el in elements:
+        if new_elements:
+            new_elements.append(sep)
+        new_elements.append(el)
+    return fork(new_elements)
+
+
 def fork(*branches):
     res = Branches()
     for branch in branches:

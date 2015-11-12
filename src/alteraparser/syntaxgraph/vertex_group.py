@@ -10,7 +10,6 @@ class StartVertex(Vertex):
         self.__group = vertex_group
         self.name = None
         self.id = None
-        self.ignore = False
 
     def num_successors(self):
         if not self.__group._VertexGroup__expanded:
@@ -29,7 +28,6 @@ class EndVertex(Vertex):
         Vertex.__init__(self, VertexCategory.GROUP_END)
         self.name = None
         self.id = None
-        self.ignore = False
 
 
 class VertexGroup(Dockable, Clonable):
@@ -59,11 +57,6 @@ class VertexGroup(Dockable, Clonable):
 
     id = property(get_id, set_id)
 
-    def set_ignore(self, ignore=True):
-        self.__start.ignore = ignore
-        self.__end.ignore = ignore
-        return self
-
     def connect(self, dockable):
         self.__end.connect(dockable)
         return dockable
@@ -86,7 +79,6 @@ class VertexGroup(Dockable, Clonable):
     def _on_clone_creation(self, original):
         self.__start.name = self.__end.name = original.__start.name
         self.__start.id = self.__end.id = original.__start.id
-        self.__start.ignore = self.__end.ignore = original.__start.ignore
 
 
 class Multiples(VertexGroup):

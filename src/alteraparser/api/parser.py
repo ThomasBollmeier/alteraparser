@@ -13,6 +13,13 @@ class Parser(object):
         self.__grammar.get_dock_vertex().walk(finder)
         return self.__create_ast(finder.path)
 
+    def parse_file(self, filepath):
+        f = open(filepath, 'r')
+        lines = f.readlines()
+        f.close()
+        code = ''.join(lines)
+        return self.parse_string(code)
+
     @staticmethod
     def __create_ast(path):
         root = None

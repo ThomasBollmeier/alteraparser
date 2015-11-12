@@ -38,7 +38,7 @@ class MatchFinderTest(unittest.TestCase):
         self.assertEqual(exp, act)
 
     def test_keyword_match(self):
-        wspace = one_to_many(characters(' ', '\t', '\n')).set_name('ws').set_ignore()
+        wspace = one_to_many(characters(' ', '\t', '\n')).set_name('ws')
         alpha = char_range('a', 'z')
         num = char_range('0', '9')
         alpha_num = fork([alpha], [num])
@@ -62,7 +62,7 @@ class MatchFinderTest(unittest.TestCase):
         finder = MatchFinder(StringInput(code))
         class_grammar.get_dock_vertex().walk(finder)
 
-        exp = '<class>CLASS<name>my-test</name>{}</class>'
+        exp = '<class><key>CLASS</key><ws>  </ws><name>my-test</name><ws> </ws>{<ws>\n</ws>}</class>'
         act = self._path_repr(finder.path)
         self.assertEqual(exp, act)
 
@@ -70,19 +70,14 @@ class MatchFinderTest(unittest.TestCase):
     @staticmethod
     def _path_repr(path):
         res = ''
-        ignore_mode = False
         for vertex, ch in path:
             if vertex.is_group_start():
-                if vertex.ignore:
-                    ignore_mode = True
-                elif vertex.name:
+                if vertex.name:
                     res += '<' + vertex.name + '>'
             elif vertex.is_group_end():
-                if vertex.ignore:
-                    ignore_mode = False
-                elif vertex.name:
+                if vertex.name:
                     res += '</' + vertex.name + '>'
-            if ch is not None and not ignore_mode:
+            if ch is not None:
                 res += ch
         return res
 
