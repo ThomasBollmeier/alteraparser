@@ -1,6 +1,6 @@
-from alteraparser.syntaxgraph.match_finder import MatchFinder
+from alteraparser.ast import AST, TextNode
 from alteraparser.io.string_input import StringInput
-from .ast import AST, TextNode
+from alteraparser.syntaxgraph.match_finder import MatchFinder
 
 
 class Parser(object):
@@ -12,6 +12,13 @@ class Parser(object):
         finder = MatchFinder(StringInput(code_str))
         self.__grammar.get_dock_vertex().walk(finder)
         return self.__create_ast(finder.path)
+
+    def parse_file(self, filepath):
+        f = open(filepath, "r")
+        code_lines = f.readlines()
+        f.close()
+        code = ''.join(code_lines)
+        return self.parse_string(code)
 
     @staticmethod
     def __create_ast(path):
@@ -31,7 +38,8 @@ class Parser(object):
                 text = ''
                 if stack:
                     parent = stack[-1]
-                    parent.add_child(node)
+                    if not vertex.ignore:
+                        parent.add_child(node)
             if ch is not None:
                 text += ch
         return root

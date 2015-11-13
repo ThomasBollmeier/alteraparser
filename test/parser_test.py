@@ -1,7 +1,8 @@
 import unittest
-from alteraparser.api import grammar, keyword, single_char, token, \
+
+from alteraparser.parser import Parser
+from alteraparser import grammar, keyword, single_char, token, \
     char_range, characters, fork, many, one_to_many, optional
-from alteraparser.api.parser import Parser
 
 
 class ParserTest(unittest.TestCase):
@@ -13,7 +14,7 @@ class ParserTest(unittest.TestCase):
         ALPHA_NUM = token(fork(ALPHA, NUM))
         UNDERSCORE = token(single_char('_'))
         DOT = token(single_char('.'))
-        WS = token(one_to_many(characters(' ', '\t', '\n')))
+        WS = token(one_to_many(characters(' ', '\t', '\n'))).set_ignore()
 
         loop = keyword('loop', False)
         endloop = keyword('endloop', False)
@@ -40,6 +41,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsNotNone(ast)
         self.assertEqual('people', ast['loop'][0]['#items'][0].text)
         self.assertEqual('person', ast['loop'][0]['#item'][0].text)
+        self.assertEqual('LOOPATpeopleINTOperson.ENDLOOP.', ast.text)
 
 
 if __name__ == '__main__':

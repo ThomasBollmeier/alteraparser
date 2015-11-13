@@ -46,7 +46,7 @@ class DockTest(unittest.TestCase):
         begin.connect(TestGroup(size)).connect(Vertex())
         begin.walk(processor)
 
-        self.assertEqual(processor.count, 4 + size)
+        self.assertEqual(processor.count, 6 + size)
 
 
 if __name__ == '__main__':

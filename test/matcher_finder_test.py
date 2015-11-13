@@ -1,8 +1,9 @@
 import unittest
+
+from alteraparser import char_range, fork, many, single_char, keyword, \
+    characters, one_to_many, optional, grammar
 from alteraparser.io.string_input import StringInput
 from alteraparser.syntaxgraph.match_finder import MatchFinder
-from alteraparser.api import char_range, fork, many, single_char, keyword, \
-    characters, one_to_many, optional, grammar
 
 
 class MatchFinderTest(unittest.TestCase):
@@ -62,7 +63,7 @@ class MatchFinderTest(unittest.TestCase):
         finder = MatchFinder(StringInput(code))
         class_grammar.get_dock_vertex().walk(finder)
 
-        exp = '<class>CLASS<name>my-test</name>{}</class>'
+        exp = '<class><key>CLASS</key><name>my-test</name>{}</class>'
         act = self._path_repr(finder.path)
         self.assertEqual(exp, act)
 
