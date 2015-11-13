@@ -19,12 +19,28 @@ class AST(object):
         self.__children.append(child)
 
     def get_children_by_name(self, name):
-        return [child for child in self.__children
-                if isinstance(child, AST) and child.__name == name]
+        res = []
+        for child in self.__children:
+            if not isinstance(child, AST):
+                continue
+            if child.__name:
+                if child.__name == name:
+                    res.append(child)
+            else:
+                res += child.get_children_by_name(name)
+        return res
 
     def get_children_by_id(self, id):
-        return [child for child in self.__children
-                if isinstance(child, AST) and child.id == id]
+        res = []
+        for child in self.__children:
+            if not isinstance(child, AST):
+                continue
+            if child.__name:
+                if child.id == id:
+                    res.append(child)
+            else:
+                res += child.get_children_by_id(id)
+        return res
 
     def __getitem__(self, key):
         if key[0] == '#':

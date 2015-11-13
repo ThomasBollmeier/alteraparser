@@ -25,6 +25,15 @@ def fork(*branches):
     return res
 
 
+def seq(sep, *elements):
+    new_elements = []
+    for el in elements:
+        if new_elements:
+            new_elements.append(sep)
+        new_elements.append(el)
+    return fork(new_elements)
+
+
 def grammar(name, *branches):
     res = fork(*branches).set_name(name)
     res.connect(FinalVertex())

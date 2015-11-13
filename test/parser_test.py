@@ -1,8 +1,7 @@
 import unittest
-
-from alteraparser.parser import Parser
 from alteraparser import grammar, keyword, single_char, token, \
-    char_range, characters, fork, many, one_to_many, optional
+    char_range, characters, seq, fork, many, one_to_many, optional
+from alteraparser.parser import Parser
 
 
 class ParserTest(unittest.TestCase):
@@ -25,8 +24,7 @@ class ParserTest(unittest.TestCase):
         items = varname.clone().set_id('items')
         item = varname.clone().set_id('item')
 
-        loop_stmt = fork([loop, WS, at, WS, items, WS,
-                          into, WS, item, optional(WS), DOT, WS,
+        loop_stmt = fork([seq(WS, loop, at, items, into, item), optional(WS), DOT, WS,
                           endloop, optional(WS), DOT]).set_name('loop')
 
         self.grammar = grammar('abap', loop_stmt)
@@ -34,7 +32,7 @@ class ParserTest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_parser(self):
+    def test_parse_string(self):
         parser = Parser(self.grammar)
         code = 'LOOP AT people INTO person. ENDLOOP.'
         ast = parser.parse_string(code)
@@ -43,6 +41,12 @@ class ParserTest(unittest.TestCase):
         self.assertEqual('person', ast['loop'][0]['#item'][0].text)
         self.assertEqual('LOOPATpeopleINTOperson.ENDLOOP.', ast.text)
 
+    def test_parse_file(self):
+        parser = Parser(self.grammar)
+        ast = parser.parse_file('input.txt')
+        self.assertIsNotNone(ast)
+        self.assertEqual('people', ast['loop'][0]['#items'][0].text)
+        self.assertEqual('person', ast['loop'][0]['#item'][0].text)
 
 if __name__ == '__main__':
 
