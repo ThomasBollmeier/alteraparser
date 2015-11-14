@@ -29,6 +29,7 @@ class EndVertex(Vertex):
         self.name = None
         self.id = None
         self.ignore = False
+        self.transform_ast_fn = lambda ast: ast
 
 
 class VertexGroup(Dockable, Clonable):
@@ -62,6 +63,10 @@ class VertexGroup(Dockable, Clonable):
         self.__end.ignore = ignore
         return self
 
+    def transform_ast(self, transformer_fn):
+        self.__end.transform_ast_fn = transformer_fn
+        return self
+
     def connect(self, dockable):
         self.__end.connect(dockable)
         return dockable
@@ -85,6 +90,7 @@ class VertexGroup(Dockable, Clonable):
         self.__start.name = self.__end.name = original.__start.name
         self.__start.id = self.__end.id = original.__start.id
         self.__end.ignore = original.__end.ignore
+        self.__end.transform_ast_fn = original.__end.transform_ast_fn
 
 
 class Multiples(VertexGroup):

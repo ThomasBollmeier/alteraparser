@@ -27,3 +27,8 @@ Code sample::
     my_parser = Parser(my_grammar)
     ast = my_parser.parse_file("my_code.txt")
 
+Changes
+=======
+
+0.5.0.a2:
+    - added transform_ast method to enable transformation of AST nodes

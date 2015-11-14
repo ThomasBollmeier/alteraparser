@@ -39,7 +39,8 @@ class Parser(object):
                 if stack:
                     parent = stack[-1]
                     if not vertex.ignore:
-                        parent.add_child(node)
+                        transformed_node = vertex.transform_ast_fn(node)
+                        parent.add_child(transformed_node)
             if ch is not None:
                 text += ch
         return root
