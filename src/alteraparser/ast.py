@@ -18,6 +18,10 @@ class AST(object):
     def add_child(self, child):
         self.__children.append(child)
 
+    def get_children(self):
+        return self.__children
+    children = property(get_children)
+
     def get_children_by_name(self, name):
         res = []
         for child in self.__children:
