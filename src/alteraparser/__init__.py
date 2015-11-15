@@ -1,6 +1,12 @@
 from alteraparser.syntaxgraph.matcher_vertex import MatcherVertex
 from alteraparser.syntaxgraph.final_vertex import FinalVertex
-from alteraparser.syntaxgraph.vertex_group import Multiples, Branches
+from alteraparser.syntaxgraph.vertex_group import Multiples, Branches, VertexGroup
+
+
+def group(on_expand_fn):
+    return type(on_expand_fn.__name__,
+                (VertexGroup,),
+                {'_on_expand': on_expand_fn})
 
 
 def optional(element):

@@ -1,7 +1,7 @@
 import unittest
 
 from alteraparser import char_range, fork, many, single_char, keyword, \
-    characters, one_to_many, optional, grammar
+    characters, one_to_many, optional, grammar, group
 from alteraparser.io.string_input import StringInput
 from alteraparser.syntaxgraph.match_finder import MatchFinder
 
@@ -67,6 +67,32 @@ class MatchFinderTest(unittest.TestCase):
         act = self._path_repr(finder.path)
         self.assertEqual(exp, act)
 
+    def test_custom_group(self):
+        class_grammar = grammar('class', self.class_stmt())
+
+        code = 'CLASS  my-test {\n}'
+        finder = MatchFinder(StringInput(code))
+        class_grammar.get_dock_vertex().walk(finder)
+
+        exp = '<class><key>CLASS</key><ws>  </ws><name>my-test</name><ws> </ws>{<ws>\n</ws>}</class>'
+        act = self._path_repr(finder.path)
+        self.assertEqual(exp, act)
+        pass
+
+    @group
+    def class_stmt(self, start, end):
+        ws = one_to_many(characters(' ', '\t', '\n')).set_name('ws')
+        alpha = char_range('a', 'z')
+        num = char_range('0', '9')
+        alpha_num = fork([alpha], [num])
+        dash = single_char('-')
+        brace_open = single_char('{')
+        brace_close = single_char('}')
+        var_name = fork([alpha,
+                        many(fork([alpha_num],
+                                  [dash, alpha_num]))]).set_name('name')
+        class_ = keyword('CLASS')
+        start > class_ > ws > var_name > ws > brace_open > optional(ws) > brace_close > end
 
     @staticmethod
     def _path_repr(path):
