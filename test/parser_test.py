@@ -33,7 +33,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual('people', loop['items'][0].text)
         self.assertEqual('person', loop['item'][0].text)
 
-
     def test_parse_file(self):
         test_grammar = self.__create_grammar()
         parser = Parser(test_grammar)
@@ -62,7 +61,7 @@ class ParserTest(unittest.TestCase):
         loop_stmt = fork([seq(WS, loop, at, items, into, item), optional(WS), DOT, WS,
                           endloop, optional(WS), DOT]).set_name('loop')
         if transformer_fn:
-            loop_stmt.transform_ast(transformer_fn)
+            loop_stmt = loop_stmt.transform_ast(transformer_fn)
 
         return grammar('test', loop_stmt)
 

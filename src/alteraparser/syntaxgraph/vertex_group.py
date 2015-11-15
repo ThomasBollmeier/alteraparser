@@ -40,9 +40,10 @@ class VertexGroup(Dockable, Clonable):
         self.__end = EndVertex()
 
     def set_name(self, name):
-        self.__start.name = name
-        self.__end.name = name
-        return self
+        res = self.clone()
+        res.__start.name = name
+        res.__end.name = name
+        return res
 
     def get_name(self):
         return self.__start.name
@@ -50,9 +51,10 @@ class VertexGroup(Dockable, Clonable):
     name = property(get_name, set_name)
 
     def set_id(self, id):
-        self.__start.id = id
-        self.__end.id = id
-        return self
+        res = self.clone()
+        res.__start.id = id
+        res.__end.id = id
+        return res
 
     def get_id(self):
         return self.__start.id
@@ -64,8 +66,9 @@ class VertexGroup(Dockable, Clonable):
         return self
 
     def transform_ast(self, transformer_fn):
-        self.__end.transform_ast_fn = transformer_fn
-        return self
+        res = self.clone()
+        res.__end.transform_ast_fn = transformer_fn
+        return res
 
     def connect(self, dockable):
         self.__end.connect(dockable)
