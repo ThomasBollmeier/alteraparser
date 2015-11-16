@@ -13,7 +13,7 @@ setup(
 
     name='alteraparser',
 
-    version='0.5.4a2',
+    version='0.6.0b1',
 
     description='A simple parser and grammar definition library',
     long_description=long_description,
@@ -52,7 +52,10 @@ setup(
 
     keywords='parser development',
 
-    packages=['alteraparser', 'alteraparser.io', 'alteraparser.syntaxgraph'],
+    packages=['alteraparser',
+              'alteraparser.bnf',
+              'alteraparser.io',
+              'alteraparser.syntaxgraph'],
     package_dir={'alteraparser': 'src/alteraparser'}
 
 )
