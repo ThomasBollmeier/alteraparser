@@ -9,8 +9,11 @@ class MatchFinder(Processor):
         self.__input = input
         self.__buffer = []
         self.__match_char = None
+        self.__stopped = False
 
     def process(self, vertex, path):
+        if self.__stopped:
+            return ProcessingResult.STOP
         if not self.__match_char:
             self.__match_char = self.__get_next_char()
         if self.__match_char:
@@ -29,10 +32,16 @@ class MatchFinder(Processor):
                     self.__buffer.append(self.__match_char)
                     self.__match_char = None
                 self.__buffer.append(ch)
+        if v.is_group_end() and v.is_rule_end:
+            self.__stopped = True
 
     def get_path(self):
         return self.__path
     path = property(get_path)
+
+    def get_stopped(self):
+        return self.__stopped
+    stopped = property(get_stopped)
 
     def __process_with_char_search(self, vertex):
         catg = vertex.get_category()

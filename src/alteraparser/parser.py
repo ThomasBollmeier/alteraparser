@@ -11,7 +11,10 @@ class Parser(object):
     def parse_string(self, code_str):
         finder = MatchFinder(StringInput(code_str))
         self.__grammar.get_dock_vertex().walk(finder)
-        return self.__create_ast(finder.path)
+        if not finder.stopped:
+            return self.__create_ast(finder.path)
+        else:
+            return None
 
     def parse_file(self, filepath):
         f = open(filepath, "r")

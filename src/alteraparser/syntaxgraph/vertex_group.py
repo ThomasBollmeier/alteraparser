@@ -30,6 +30,7 @@ class EndVertex(Vertex):
         self.id = None
         self.ignore = False
         self.transform_ast_fn = lambda ast: ast
+        self.is_rule_end = False
 
 
 class VertexGroup(Dockable, Clonable):
@@ -70,6 +71,11 @@ class VertexGroup(Dockable, Clonable):
         res.__end.transform_ast_fn = transformer_fn
         return res
 
+    def set_as_rule(self, is_rule=True):
+        res = self.clone()
+        res.__end.is_rule_end = is_rule
+        return res
+
     def connect(self, dockable):
         self.__end.connect(dockable)
         return dockable
@@ -94,6 +100,7 @@ class VertexGroup(Dockable, Clonable):
         self.__start.id = self.__end.id = original.__start.id
         self.__end.ignore = original.__end.ignore
         self.__end.transform_ast_fn = original.__end.transform_ast_fn
+        self.__end.is_rule_end = original.__end.is_rule_end
 
 
 class Multiples(VertexGroup):
