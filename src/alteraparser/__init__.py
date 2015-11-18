@@ -3,10 +3,17 @@ from alteraparser.syntaxgraph.final_vertex import FinalVertex
 from alteraparser.syntaxgraph.vertex_group import Multiples, Branches, VertexGroup
 
 
-def group(on_expand_fn):
-    return type(on_expand_fn.__name__,
-                (VertexGroup,),
-                {'_on_expand': on_expand_fn})
+def group(is_unique=False):
+    def init(self):
+        VertexGroup.__init__(self)
+        self._VertexGroup__end.is_rule_end = is_unique
+
+    def factory(on_expand_fn):
+        return type(on_expand_fn.__name__,
+                    (VertexGroup,),
+                    {'__init__': init,
+                     '_on_expand': on_expand_fn})
+    return factory
 
 
 def optional(element):

@@ -18,6 +18,15 @@ class BnfGrammarTest(unittest.TestCase):
         ast = self.parser.parse_string(code)
         self.assertIsNotNone(ast)
 
+        code_with_errors = """
+            alpha = 'a'..'z' | 'A'..'Z';
+            alpha_num = alpha | '0'..'9';
+            ws = <newline> | <tab> | <space> | <not-existing>;
+            varname = alpha | ( alpha_num | '-' alpha_num )*;
+        """
+        ast = self.parser.parse_string(code_with_errors)
+        self.assertIsNone(ast)
+
 if __name__ == '__main__':
 
     unittest.main()

@@ -71,9 +71,9 @@ class VertexGroup(Dockable, Clonable):
         res.__end.transform_ast_fn = transformer_fn
         return res
 
-    def set_as_rule(self, is_rule=True):
+    def set_unique(self, is_unique=True):
         res = self.clone()
-        res.__end.is_rule_end = is_rule
+        res.__end.is_rule_end = is_unique
         return res
 
     def connect(self, dockable):

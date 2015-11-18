@@ -46,10 +46,10 @@ terminal = fork([quote,
 rule_name = fork([alpha,
                   many(fork(alpha_num,
                             fork([underscore, alpha_num])))])\
-    .set_name('rule_name')
+    .set_name('rule_name').set_unique()
 
 
-@group
+@group(is_unique=True)
 def prod_rule_stmt(self, start, end):
     global rule_name, assign, semicolon
     start > many(whitespace) > \
@@ -63,7 +63,7 @@ def prod_rule_stmt(self, start, end):
         end
 
 
-@group
+@group()
 def expr_stmt(self, start, end):
     global pipe, whitespace
     start > branch_stmt() > \
@@ -74,7 +74,7 @@ def expr_stmt(self, start, end):
             branch_stmt()])) > end
 
 
-@group
+@group()
 def branch_stmt(self, start, end):
     global terminal, rule_name, special_char, cardinality
     v = start.clone()
@@ -87,7 +87,7 @@ def branch_stmt(self, start, end):
     v > optional(cardinality) > end
 
 
-@group
+@group(is_unique=True)
 def comp_stmt(self, start, end):
     global par_open, par_close, whitespace
     start > par_open.clone() > \
@@ -98,7 +98,7 @@ def comp_stmt(self, start, end):
         end
 
 
-@group
+@group(is_unique=True)
 def range_stmt(self, start, end):
     global dot, terminal
     from_ = terminal.set_id('from')
@@ -108,6 +108,6 @@ def range_stmt(self, start, end):
 
 bnf_grammar = grammar('bnf', one_to_many(fork(
     [many(whitespace),
-     prod_rule_stmt().set_as_rule(),
+     prod_rule_stmt(),
      many(whitespace)])))
 
