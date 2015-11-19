@@ -17,6 +17,7 @@ class BnfGrammarTest(unittest.TestCase):
         """
         ast = self.parser.parse_string(code)
         self.assertIsNotNone(ast)
+        print(ast.to_xml())
 
         code_with_errors = """
             alpha = 'a'..'z' | 'A'..'Z';

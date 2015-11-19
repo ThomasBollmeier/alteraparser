@@ -26,11 +26,14 @@ class Parser(object):
     @staticmethod
     def __create_ast(path):
         root = None
-        current = None
         stack = []
         text = ''
         for vertex, ch in path:
             if vertex.is_group_start():
+                if text and stack:
+                    parent = stack[-1]
+                    parent.add_child(TextNode(text))
+                text = ''
                 node = AST(vertex.name, vertex.id)
                 if root is None:
                     root = node
@@ -42,7 +45,10 @@ class Parser(object):
                 if stack:
                     parent = stack[-1]
                     if not vertex.ignore:
+                        id_ = node.id
                         transformed_node = vertex.transform_ast_fn(node)
+                        # ID must not be changed!
+                        transformed_node.id = id_
                         parent.add_child(transformed_node)
             if ch is not None:
                 text += ch

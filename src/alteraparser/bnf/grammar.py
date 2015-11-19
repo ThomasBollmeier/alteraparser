@@ -4,14 +4,6 @@ from alteraparser.ast import AST
 # Define BNF-like grammar
 
 
-def esc_trnsf(ast):
-    return AST('esc', text="'")
-
-
-def terminal_trnsf(ast):
-    return AST('term', text=ast.text[1:-1])
-
-
 quote = single_char("'")
 non_quote = quote.clone().negate()
 question_mark = single_char('?')
@@ -32,24 +24,48 @@ whitespace = token(characters(' ', '\t', '\n'), 'ws').set_ignore()
 newline = keyword('<newline>', name='newline')
 tab = keyword('<tab>', name='tab')
 space = keyword('<space>', name='space')
-special_char = fork(newline, tab, space)
+
+
+def special_char_trnsf(ast):
+    name = ast.children[0].name
+    return AST(name)
+
+
+special_char = fork(newline, tab, space).transform_ast(special_char_trnsf)
+
+
+def esc_trnsf(ast):
+    return AST('esc', text="'")
+
 
 esc = fork([single_char('\\'), quote])\
     .set_name('esc')\
     .transform_ast(esc_trnsf)
+
+
+def terminal_trnsf(ast):
+    return AST('term', text=ast.text[1:-1])
+
 
 terminal = fork([quote,
                  many(fork(esc, non_quote)),
                  quote]).set_name('term')\
     .transform_ast(terminal_trnsf)
 
+
+def rule_name_trnsf(ast):
+    return AST('rule_name', text=ast.text)
+
+
 rule_name = fork([alpha,
                   many(fork(alpha_num,
                             fork([underscore, alpha_num])))])\
-    .set_name('rule_name').set_unique()
+    .set_name('rule_name')\
+    .set_unique()\
+    .transform_ast(rule_name_trnsf)
 
 
-@group(is_unique=True)
+@group(name='rule', is_unique=True)
 def prod_rule_stmt(self, start, end):
     global rule_name, assign, semicolon
     start > many(whitespace) > \
@@ -98,11 +114,20 @@ def comp_stmt(self, start, end):
         end
 
 
-@group(is_unique=True)
+def range_trnsf(ast):
+    res = AST('range')
+    from_ = ast['#from'][0]
+    to = ast['#to'][0]
+    res.add_child(AST('from', text=from_.text))
+    res.add_child(AST('to', text=to.text))
+    return res
+
+
+@group(name='range', is_unique=True, transform_ast_fn=range_trnsf)
 def range_stmt(self, start, end):
     global dot, terminal
     from_ = terminal.set_id('from')
-    to =  terminal.set_id('to')
+    to = terminal.set_id('to')
     start > from_ > dot.clone() > dot.clone() > to > end
 
 
