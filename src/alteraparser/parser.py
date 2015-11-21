@@ -3,6 +3,10 @@ from alteraparser.io.string_input import StringInput
 from alteraparser.syntaxgraph.match_finder import MatchFinder
 
 
+class ParseError(RuntimeError):
+    pass
+
+
 class Parser(object):
 
     def __init__(self, grammar):
@@ -14,7 +18,7 @@ class Parser(object):
         if not finder.stopped:
             return self.__create_ast(finder.path)
         else:
-            return None
+            raise ParseError(self.__get_unparsed_text(finder.path))
 
     def parse_file(self, filepath):
         f = open(filepath, "r")
@@ -35,22 +39,25 @@ class Parser(object):
                     parent.add_child(TextNode(text))
                 text = ''
                 node = AST(vertex.name, vertex.id)
-                if root is None:
-                    root = node
                 stack.append(node)
             elif vertex.is_group_end():
                 node = stack.pop()
                 node.add_child(TextNode(text))
                 text = ''
+                id_ = node.id
+                transformed_node = vertex.transform_ast_fn(node)
+                # ID must not be changed!
+                transformed_node.id = id_
                 if stack:
                     parent = stack[-1]
                     if not vertex.ignore:
-                        id_ = node.id
-                        transformed_node = vertex.transform_ast_fn(node)
-                        # ID must not be changed!
-                        transformed_node.id = id_
                         parent.add_child(transformed_node)
+                else:
+                    root = transformed_node
             if ch is not None:
                 text += ch
         return root
 
+    @staticmethod
+    def __get_unparsed_text(path):
+        return ''.join([ch for _, ch in path if ch is not None])

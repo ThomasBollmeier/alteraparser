@@ -68,12 +68,12 @@ class VertexGroup(Dockable, Clonable):
 
     def transform_ast(self, transformer_fn):
         res = self.clone()
-        res.__end.transform_ast_fn = transformer_fn
+        res._VertexGroup__end.transform_ast_fn = transformer_fn
         return res
 
     def set_unique(self, is_unique=True):
         res = self.clone()
-        res.__end.is_rule_end = is_unique
+        res._VertexGroup__end.is_rule_end = is_unique
         return res
 
     def connect(self, dockable):

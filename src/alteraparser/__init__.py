@@ -52,8 +52,10 @@ def seq(sep, *elements):
     return fork(new_elements)
 
 
-def grammar(name, *branches):
+def grammar(name, branches, transform_ast_fn=None):
     res = fork(*branches).set_name(name)
+    if transform_ast_fn:
+        res = res.transform_ast(transform_ast_fn)
     res.connect(FinalVertex())
     return res
 

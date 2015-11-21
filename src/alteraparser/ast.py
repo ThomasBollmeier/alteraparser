@@ -42,10 +42,9 @@ class AST(object):
         for child in self.__children:
             if not isinstance(child, AST):
                 continue
-            if child.__name:
-                if child.__name == name:
-                    res.append(child)
-            elif recursive:
+            if child.__name == name:
+                res.append(child)
+            elif recursive and not child.__name:
                 res += child.get_children_by_name(name)
         return res
 
@@ -54,10 +53,9 @@ class AST(object):
         for child in self.__children:
             if not isinstance(child, AST):
                 continue
-            if child.__name:
-                if child.id == id_:
-                    res.append(child)
-            elif recursive:
+            if child.id == id_:
+                res.append(child)
+            elif recursive and not child.__name:
                 res += child.get_children_by_id(id_)
         return res
 
@@ -68,7 +66,8 @@ class AST(object):
             return self.get_children_by_name(key)
 
     def to_xml(self, indent_size=2):
-        return self._to_xml('', 0, indent_size)
+        intro = '<?xml version="1.0"?>'
+        return intro + os.linesep + self._to_xml('', 0, indent_size)
 
     def _to_xml(self, xml, indent, indent_size):
         name = self.__name or 'ast'
