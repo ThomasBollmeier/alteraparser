@@ -14,7 +14,7 @@ class BnfGrammarTest(unittest.TestCase):
             alpha = 'a'..'z' | 'A'..'Z';
             alpha_num = alpha | '0'..'9';
             var_name = alpha & (alpha_num | '-' alpha_num)&*;
-
+            call = '(' &? 'defn'#func_name &? '[' &? varname* &? ']' &? ')';
         """
         ast = self.parser.parse_string(code)
         self.assertIsNotNone(ast)

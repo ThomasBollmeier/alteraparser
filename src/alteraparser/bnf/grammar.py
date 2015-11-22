@@ -10,17 +10,16 @@ question_mark = single_char('?')
 plus = single_char('+')
 star = single_char('*')
 tilde = single_char('~')
-ampersand = token(single_char('&'), 'ampersand')
-cardinality = fork(
-    question_mark,
-    [optional(ampersand), plus],
-    [optional(ampersand), star]).set_name('cardinality')
+ampersand = token(single_char('&'), 'ampersand')\
+    .transform_ast(lambda ast: AST('no-ws'))
+opt_ws = keyword('&?').transform_ast(lambda ast: AST('optional-ws'))
 par_open = single_char('(')
 par_close = single_char(')')
 pipe = token(single_char('|'), 'pipe')
 assign = single_char('=')
 dot = single_char('.')
 semicolon = token(single_char(';'), 'semicolon')
+hash_char = single_char('#')
 alpha = char_range('a', 'z')
 num = char_range('0', '9')
 alpha_num = fork(alpha, num)
@@ -30,6 +29,33 @@ newline = keyword('<newline>', name='newline')
 tab = keyword('<tab>', name='tab')
 space = keyword('<space>', name='space')
 ws = keyword('WHITESPACE', name='WHITESPACE')
+
+
+def cardinality_trnsf(ast):
+    children = ast.children
+    if len(children) == 1:
+        no_whitespace = None
+        value = children[0].text
+    else:
+        opt_no_ws = children[0]
+        if opt_no_ws.ast_children:
+            no_whitespace = opt_no_ws.ast_children[0]
+        else:
+            no_whitespace = None
+        value = children[1].text
+    res = AST('cardinality')
+    res.add_child(AST('value', text=value))
+    if no_whitespace:
+        res.add_child(no_whitespace)
+    return res
+
+
+cardinality = fork(
+    question_mark,
+    [optional(ampersand), plus],
+    [optional(ampersand), star])\
+    .set_name('cardinality')\
+    .transform_ast(cardinality_trnsf)
 
 
 def special_char_trnsf(ast):
@@ -69,6 +95,18 @@ rule_name = fork([alpha,
     .set_name('rule_name')\
     .set_unique()\
     .transform_ast(rule_name_trnsf)
+
+
+def id_trnsf(ast):
+    return AST('id', text=ast.text)
+
+
+id_name = fork([alpha,
+                many(fork(alpha_num,
+                          fork([underscore, alpha_num])))])\
+    .set_name('id_name')\
+    .set_unique()\
+    .transform_ast(id_trnsf)
 
 
 def rule_trnsf(ast):
@@ -124,48 +162,44 @@ def expr_stmt(self, start, end):
 
 def branch_trnsf(ast):
     res = AST('branch')
-    elements = AST('elements')
     for content in ast['#content']:
         if content.ast_children:
-            node = content.ast_children[0]
+            node_fork, opt_id, opt_cardinal = content.ast_children
+            node = node_fork.ast_children[0]
+            if opt_id.ast_children:
+                id_node = opt_id.ast_children[0].ast_children[0]
+                node.add_child(AST('id', text=id_node.text))
+            if opt_cardinal.ast_children:
+                cardinal = opt_cardinal.ast_children[0]
+                node.add_child(cardinal)
         else:
             node = content
             node.id = ''
-        elements.add_child(node)
-    res.add_child(elements)
-    at_ = ast['at']
-    if at_:
-        res.add_child(AST('ignore'))
-    card = ast['cardinality']
-    if card:
-        mult = card[0].text
-        if mult == '?':
-            mult_value = 'zero-to-one'
-        elif mult == '+':
-            mult_value = 'one-to-many'
-        else:
-            mult_value = 'many'
-        res.add_child(AST('multiplicity', text=mult_value))
+        res.add_child(node)
     return res
 
 
 @group('branch', transform_ast_fn=branch_trnsf)
 def branch_stmt(self, start, end):
     global terminal, rule_name, whitespace,\
-        special_char, cardinality, ampersand
+        special_char, cardinality, ampersand, hash_char, opt_ws
     v = start.clone()
-    start > fork(
+    start > fork([fork(
         terminal.clone(),
         rule_name.clone(),
         range_stmt(),
         special_char.clone(),
-        comp_stmt()).set_id('content') >\
-        optional(cardinality) >\
+        comp_stmt()),
+        optional(fork([hash_char, id_name])),
+        optional(cardinality)]).set_id('content') >\
         v
     v > one_to_many(whitespace) >\
         optional(fork([ampersand.set_id('content'),
                        one_to_many(whitespace)])) > start
-    v > end
+    v > one_to_many(whitespace) >\
+        optional(fork([opt_ws.set_id('content'),
+                       one_to_many(whitespace)])) > start
+    v.connect(end)
 
 
 def comp_trnsf(ast):
