@@ -54,6 +54,7 @@ setup(
 
     packages=['alteraparser',
               'alteraparser.bnf',
+              'alteraparser.codegen',
               'alteraparser.io',
               'alteraparser.syntaxgraph'],
     package_dir={'alteraparser': 'src/alteraparser'}

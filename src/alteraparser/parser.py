@@ -12,16 +12,19 @@ class Parser(object):
     def __init__(self, grammar):
         self.__grammar = grammar
 
-    def parse_string(self, code_str):
-        finder = MatchFinder(StringInput(code_str))
+    def parse(self, input_stream):
+        finder = MatchFinder(input_stream)
         self.__grammar.get_dock_vertex().walk(finder)
         if not finder.stopped:
             return self.__create_ast(finder.path)
         else:
             raise ParseError(self.__get_unparsed_text(finder.path))
 
-    def parse_file(self, filepath):
-        f = open(filepath, "r")
+    def parse_string(self, code_str):
+        return self.parse(StringInput(code_str))
+
+    def parse_file(self, file_path):
+        f = open(file_path, "r")
         code_lines = f.readlines()
         f.close()
         code = ''.join(code_lines)

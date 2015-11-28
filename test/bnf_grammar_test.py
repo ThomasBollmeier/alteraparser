@@ -11,10 +11,21 @@ class BnfGrammarTest(unittest.TestCase):
     def test_rules(self):
         code = """
             WHITESPACE = <space> | <tab> | <newline>;
+
             alpha = 'a'..'z' | 'A'..'Z';
+
             alpha_num = alpha | '0'..'9';
-            var_name = alpha & (alpha_num | '-' alpha_num)&*;
-            expr = '(' &? expr#callee expr#arg* &? ')';
+
+            var_name = alpha & (alpha_num | '-' & alpha_num)&*;
+
+            block_comment = '/*'  &? ( [^*] | '*' & [^/] )&+ &? '*/';
+
+            line_comment = ';;' &? [^<newline>]&* &? <newline>;
+
+            call = '(' &? expr#callee expr#arg* &? ')';
+
+            @grammar
+            my_lisp = call+;
         """
         ast = self.parser.parse_string(code)
         self.assertIsNotNone(ast)

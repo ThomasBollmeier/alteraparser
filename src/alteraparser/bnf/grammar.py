@@ -9,12 +9,14 @@ non_quote = quote.clone().negate()
 question_mark = single_char('?')
 plus = single_char('+')
 star = single_char('*')
-tilde = single_char('~')
+caret = single_char('^')
 ampersand = token(single_char('&'), 'ampersand')\
     .transform_ast(lambda ast: AST('no-ws'))
 opt_ws = keyword('&?').transform_ast(lambda ast: AST('optional-ws'))
 par_open = single_char('(')
 par_close = single_char(')')
+bracket_open = single_char('[')
+bracket_close = single_char(']')
 pipe = token(single_char('|'), 'pipe')
 assign = single_char('=')
 dot = single_char('.')
@@ -44,7 +46,12 @@ def cardinality_trnsf(ast):
             no_whitespace = None
         value = children[1].text
     res = AST('cardinality')
-    res.add_child(AST('value', text=value))
+    element = {
+        '?': 'zero-to-one',
+        '+': 'one-to-many',
+        '*': 'many'
+    }[value]
+    res.add_child(AST(element))
     if no_whitespace:
         res.add_child(no_whitespace)
     return res
@@ -109,8 +116,11 @@ id_name = fork([alpha,
     .transform_ast(id_trnsf)
 
 
-def rule_trnsf(ast):
-    res = AST('rule')
+def prod_rule_trnsf(ast):
+    if not ast['#annot']:
+        res = AST('rule')
+    else:
+        res = AST('grammar')
     r_name = ast['rule-name']
     if r_name:
         r_name = r_name[0].text
@@ -123,10 +133,11 @@ def rule_trnsf(ast):
     return res
 
 
-@group(name='rule', is_unique=True, transform_ast_fn=rule_trnsf)
+@group(name='rule', is_unique=True, transform_ast_fn=prod_rule_trnsf)
 def prod_rule_stmt(self, start, end):
     global whitespace, rule_name, ws, assign, semicolon
     start > many(whitespace) > \
+        many(annotation_stmt().set_id('annot')) > \
         fork(rule_name, ws) > \
         many(whitespace) > \
         assign.clone() > \
@@ -135,6 +146,18 @@ def prod_rule_stmt(self, start, end):
         many(whitespace) > \
         semicolon.clone() > \
         end
+
+
+def annotation_trnsf(ast):
+    return AST('grammar')
+
+
+@group(name='annotation', is_unique=True, transform_ast_fn=annotation_trnsf)
+def annotation_stmt(self, start, end):
+    wspace = characters(' ', '\t')
+    nl = single_char('\n')
+    start > many(fork(wspace, nl)) > keyword('@grammar') > \
+        many(wspace) > nl.clone() > many(wspace) > end
 
 
 def expr_transf(ast):
@@ -188,6 +211,7 @@ def branch_stmt(self, start, end):
         terminal.clone(),
         rule_name.clone(),
         range_stmt(),
+        charset_stmt(),
         special_char.clone(),
         comp_stmt()),
         optional(fork([hash_char, id_name])),
@@ -236,6 +260,40 @@ def range_stmt(self, start, end):
     from_ = terminal.set_id('from')
     to = terminal.set_id('to')
     start > from_ > dot.clone() > dot.clone() > to > end
+
+
+def charset_trnsf(ast):
+    res = AST('charset')
+    fork_node = ast.children[0]
+    opt_neg = fork_node['#neg']
+    if opt_neg[0].children:
+        res.add_child(AST('negate'))
+    char_elements = fork_node['#char-element']
+    for char_elem in char_elements:
+        char_elem.id = ''
+        if char_elem.text:
+            res.add_child(AST('char', text=char_elem.text))
+        else:  # special character
+            special_node = char_elem.ast_children[0]
+            special_node.id = ''
+            res.add_child(special_node)
+    return res
+
+
+@group(name='charset', is_unique=True, transform_ast_fn=charset_trnsf)
+def charset_stmt(self, start, end):
+    global bracket_open, bracket_close, \
+        caret, special_char
+    no_bracket_close = bracket_close.clone().negate()
+    start > fork([
+        bracket_open,
+        optional(caret).set_id('neg'),
+        one_to_many(fork(
+            special_char.set_id('special'),
+            no_bracket_close,
+        ).set_id('char-element')),
+        bracket_close
+    ]) > end
 
 
 def bnf_grammar_trnsf(ast):
