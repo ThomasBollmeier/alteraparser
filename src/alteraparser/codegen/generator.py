@@ -51,18 +51,33 @@ class Generator(object):
             call = '_{}()'.format(ast.own_text.lower())
         else:
             call = '<todo>()'
-        if ast.ast_children:
-            last_child = ast.ast_children[-1]
-            if last_child.name == 'cardinality':
-                mult = last_child.ast_children[0]
-                fn_name = {
-                    'zero-to-many': 'zero_to_many',
-                    'one-to-many': 'one_to_many',
-                    'many': 'many'
-                }[mult.name]
-                # TODO: NO-WS berücksichtigen
-                call = '{}({})'.format(fn_name, call)
+        card = ast['cardinality']
+        if card:
+            call = self.__add_cardinality(call, card[0])
         return call
+
+    def __add_cardinality(self, call, card):
+        use_whitespace = len(card.ast_children) == 1
+        mult = card.ast_children[0]
+        if use_whitespace:
+            ws = 'one_to_many(_whitespace())'
+            if mult.name == 'zero-to-one':
+                res = call
+            elif mult.name == 'one-to-many':
+                res = 'fork([{0}, many(fork([{1}, {0}]))])'.format(call, ws)
+            elif mult.name == 'many':
+                res = 'optional(fork([{0},'.format(call)
+                res += ' many(fork([{0}, {1}]))]))'.format(ws, call)
+            else:
+                raise GeneratorError()
+            return res
+        else:
+            fn_name = {
+                'zero-to-one': 'zero_to_one',
+                'one-to-many': 'one_to_many',
+                'many': 'many'
+            }[mult.name]
+            return '{}({})'.format(fn_name, call)
 
     def __generate_branches_body(self, branches):
         for branch in branches.ast_children:
@@ -124,3 +139,7 @@ class FnIdCreator(object):
             id_ = 1
         self.__ids[prefix] = id_
         return '_{}_{}'.format(prefix, id_)
+
+
+class GeneratorError(Exception):
+    pass
