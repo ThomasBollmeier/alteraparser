@@ -23,7 +23,8 @@ class Generator(object):
 
     def __generate_rule(self, rule):
         rule_name = rule.ast_children[0].text.lower()
-        line = '@group(name=\'{}\')'.format(rule_name)
+        unique = rule.ast_children[2].text == 'true'
+        line = "@group(name='{}', is_unique={})".format(rule_name, unique)
         self.__writeln(line)
         fn_name = rule_name
         if rule.name != 'grammar':
@@ -51,6 +52,10 @@ class Generator(object):
             call = '_{}()'.format(ast.own_text.lower())
         else:
             call = '<todo>()'
+        id_nodes = ast['id']
+        if id_nodes:
+            id_node = id_nodes[0]
+            call = self.__add_id(call, id_node)
         card = ast['cardinality']
         if card:
             call = self.__add_cardinality(call, card[0])
@@ -78,6 +83,9 @@ class Generator(object):
                 'many': 'many'
             }[mult.name]
             return '{}({})'.format(fn_name, call)
+
+    def __add_id(self, call, id_node):
+        return "{}.set_id('{}')".format(call, id_node.text)
 
     def __generate_branches_body(self, branches):
         for branch in branches.ast_children:

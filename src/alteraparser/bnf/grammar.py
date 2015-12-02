@@ -117,7 +117,15 @@ id_name = fork([alpha,
 
 
 def prod_rule_trnsf(ast):
-    if not ast['#annot']:
+    is_grammar = False
+    is_unique = False
+    annotations = ast['annotations']
+    if annotations:
+        if annotations[0]['grammar']:
+            is_grammar = True
+        if annotations[0]['unique']:
+            is_unique = True
+    if not is_grammar:
         res = AST('rule')
     else:
         res = AST('grammar')
@@ -130,6 +138,7 @@ def prod_rule_trnsf(ast):
     rhs = ast['#rhs'][0]
     rhs.id = ''
     res.add_child(rhs)
+    res.add_child(AST('unique', text=str(is_unique).lower()))
     return res
 
 
@@ -149,16 +158,27 @@ def prod_rule_stmt(self, start, end):
 
 
 def annotation_trnsf(ast):
-    return AST('grammar')
+    res = AST('annotations')
+    for node in ast['#annot']:
+        name = node.name
+        if name == 'grammar':
+            res.add_child(AST('grammar'))
+        elif name == 'unique':
+            res.add_child(AST('unique'))
+    return res
 
 
 @group(name='annotation', is_unique=True, transform_ast_fn=annotation_trnsf)
 def annotation_stmt(self, start, end):
     wspace = characters(' ', '\t')
     nl = single_char('\n')
-    start > many(fork(wspace, nl)) > keyword('@grammar') > \
-        many(wspace) > nl.clone() > many(wspace) > end
-
+    v = start.clone()
+    annotations = fork(keyword('@grammar', name='grammar').set_id('annot'),
+                       keyword('@unique', name='unique').set_id('annot'))
+    start > many(fork(wspace, nl)) > annotations > \
+        many(wspace) > nl.clone() > many(wspace) > v
+    v > start
+    v > end
 
 def expr_transf(ast):
     branches = ast['#branch']

@@ -24,6 +24,7 @@ class GeneratorTest(unittest.TestCase):
 
             line_comment = ';;' &? [^<newline>]&* &? <newline>;
 
+            @unique
             call = '(' &? expr#callee expr#arg* &? ')';
 
             @grammar
