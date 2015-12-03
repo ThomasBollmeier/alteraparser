@@ -180,6 +180,7 @@ def annotation_stmt(self, start, end):
     v > start
     v > end
 
+
 def expr_transf(ast):
     branches = ast['#branch']
     if len(branches) == 1:

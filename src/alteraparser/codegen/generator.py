@@ -46,10 +46,17 @@ class Generator(object):
             self.__writeln('pass')
 
     def __create_call(self, ast):
-        if ast.name in ['branch']:
+        name = ast.name
+        if name in ['branch']:
             call = '{}()'.format(self.__create_fn(ast))
-        elif ast.name == 'rule-name':
+        elif name == 'term':
+            call = "keyword('{}')".format(ast.text)
+        elif name == 'rule-name':
             call = '_{}()'.format(ast.own_text.lower())
+        elif name == 'range':
+            ch_from = ast['from'][0].text
+            ch_to = ast['to'][0].text
+            call = "char_range('{}', '{}')".format(ch_from, ch_to)
         else:
             call = '<todo>()'
         id_nodes = ast['id']
