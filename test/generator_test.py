@@ -20,6 +20,8 @@ class GeneratorTest(unittest.TestCase):
 
             var_name = alpha & (alpha_num | '-' & alpha_num)&*;
 
+            no_special = [^*?!];
+
             block_comment = '/*'  &? ( [^*] | '*' & [^/] )&+ &? '*/';
 
             line_comment = ';;' &? [^<newline>]&* &? <newline>;

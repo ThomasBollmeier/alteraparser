@@ -57,6 +57,27 @@ class Generator(object):
             ch_from = ast['from'][0].text
             ch_to = ast['to'][0].text
             call = "char_range('{}', '{}')".format(ch_from, ch_to)
+        elif name == 'charset':
+            negate = ast['negate']
+            if not negate:
+                char_nodes = ast.ast_children
+            else:
+                char_nodes = ast.ast_children[1:]
+            chars = ''
+            for char_node in char_nodes:
+                if chars:
+                    chars += ', '
+                if char_node.name == 'char':
+                    chars += "'{}'".format(char_node.text)
+                elif char_node.name in ['space', 'tab', 'newline']:
+                    chars += "'[]'".format({
+                                            'space': ' ',
+                                            'tab': '\t',
+                                            'newline': '\n'
+                                            }[char_node.name])
+            call = "characters({})".format(chars)
+            if negate:
+                call += '.negate()'
         else:
             call = '<todo>()'
         id_nodes = ast['id']
