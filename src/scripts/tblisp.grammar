@@ -1,0 +1,16 @@
+WHITESPACE = <space> | <tab> | <newline>;
+
+alpha = 'a'..'z' | 'A'..'Z';
+
+digit = '0'..'9';
+
+alpha_num = alpha | digit;
+
+var_name = alpha & ( alpha_num | '-' & alpha_num )&* & [?]?;
+
+expr = var_name | call;
+
+call = '(' &? expr#callee expr#arg* &? ')';
+
+@grammar
+tblisp = WHITESPACE? call+ WHITESPACE?;
