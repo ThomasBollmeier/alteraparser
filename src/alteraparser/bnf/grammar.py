@@ -33,6 +33,15 @@ space = keyword('<space>', name='space')
 ws = keyword('WHITESPACE', name='WHITESPACE')
 
 
+def ws_trnsf(ast):
+    res = AST('WHITESPACE')
+    for child in ast.ast_children:
+        res.add_child(child)
+    return res
+
+ws = ws.transform_ast(ws_trnsf)
+
+
 def cardinality_trnsf(ast):
     children = ast.children
     if len(children) == 1:
@@ -133,7 +142,7 @@ def prod_rule_trnsf(ast):
     if r_name:
         r_name = r_name[0].text
     else:
-        r_name = ast['WHITESPACE'][0].text
+        r_name = 'WHITESPACE'
     res.add_child(AST('name', text=r_name))
     rhs = ast['#rhs'][0]
     rhs.id = ''
@@ -225,15 +234,16 @@ def branch_trnsf(ast):
 
 @group('branch', transform_ast_fn=branch_trnsf)
 def branch_stmt(self, start, end):
-    global terminal, rule_name, whitespace,\
+    global ws, terminal, rule_name, whitespace,\
         special_char, cardinality, ampersand, hash_char, opt_ws
     v = start.clone()
     start > fork([fork(
-        terminal.clone(),
-        rule_name.clone(),
+        ws,
+        terminal,
+        rule_name,
         range_stmt(),
         charset_stmt(),
-        special_char.clone(),
+        special_char,
         comp_stmt()),
         optional(fork([hash_char, id_name])),
         optional(cardinality)]).set_id('content') >\
@@ -287,7 +297,7 @@ def charset_trnsf(ast):
     res = AST('charset')
     fork_node = ast.children[0]
     opt_neg = fork_node['#neg']
-    if opt_neg[0].children:
+    if opt_neg[0].text:
         res.add_child(AST('negate'))
     char_elements = fork_node['#char-element']
     for char_elem in char_elements:

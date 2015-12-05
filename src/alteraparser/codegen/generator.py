@@ -1,5 +1,6 @@
 from alteraparser.parser import Parser
 from alteraparser.bnf.grammar import bnf_grammar
+from alteraparser.io.output import BufferedOutput
 
 
 class Generator(object):
@@ -8,23 +9,46 @@ class Generator(object):
         self.__bnf_parser = Parser(bnf_grammar)
         self.__output = output
         self.__indent_level = 0
+        self.__indent_size = 4
         self.__fn_id_creator = FnIdCreator()
         self.__functions = {}
 
     def generate_parser(self, grammar_input_stream):
         self.__writeln('from alteraparser import *')
         self.__writeln('from alteraparser.ast import AST')
+        self.__writeln('from alteraparser.parser import Parser')
         self.__writeln()
         self.__writeln()
+
         ast = self.__bnf_parser.parse(grammar_input_stream)
+        grammar_name = self.__find_grammar_name(ast)
+        self.__writeln("def create_{}_parser():".format(grammar_name))
+        self.__indent()
+        self.__writeln("return Parser({}())".format(grammar_name))
+        self.__dedent()
+        self.__writeln()
+        self.__writeln()
+
         for rule in ast.ast_children:
             self.__generate_rule(rule)
         self.__generate_internal_functions()
 
+    def __find_grammar_name(self, ast):
+        for rule in ast.ast_children:
+            if rule.name == 'grammar':
+                return rule.ast_children[0].text
+        return ''
+
     def __generate_rule(self, rule):
         rule_name = rule.ast_children[0].text.lower()
         unique = rule.ast_children[2].text == 'true'
-        line = "@group(name='{}', is_unique={})".format(rule_name, unique)
+        self.__writeln("def _{}_trnsf(ast):".format(rule_name))
+        self.__indent()
+        self.__writeln('return ast')
+        self.__dedent()
+        self.__writeln()
+        self.__writeln()
+        line = "@group(name='{0}', is_unique={1}, transform_ast_fn=_{0}_trnsf)".format(rule_name, unique)
         self.__writeln(line)
         fn_name = rule_name
         if rule.name != 'grammar':
@@ -38,21 +62,35 @@ class Generator(object):
         self.__writeln()
 
     def __generate_fn_body(self, ast):
+        body = self.__create_fn_body(ast)
+        for line in body:
+            self.__writeln(line)
+
+    def __create_fn_body(self, ast):
+        saved_output = self.__output
+        buf_output = BufferedOutput()
+        self.__output = buf_output
         if ast.name == 'branches':
             self.__generate_branches_body(ast)
         elif ast.name == 'branch':
             self.__generate_branch_body(ast)
+        elif ast.name == 'comp':
+            self.__generate_comp_body(ast)
         else:
-            self.__writeln('pass')
+            self.__output.writeln('pass')
+        self.__output = saved_output
+        return buf_output.get_lines()
 
     def __create_call(self, ast):
         name = ast.name
-        if name in ['branch']:
+        if name in ['branches', 'branch', 'comp']:
             call = '{}()'.format(self.__create_fn(ast))
         elif name == 'term':
             call = "keyword('{}')".format(ast.text)
         elif name == 'rule-name':
             call = '_{}()'.format(ast.own_text.lower())
+        elif name == 'WHITESPACE':
+            call = '_whitespace()'
         elif name == 'range':
             ch_from = ast['from'][0].text
             ch_to = ast['to'][0].text
@@ -64,22 +102,32 @@ class Generator(object):
             else:
                 char_nodes = ast.ast_children[1:]
             chars = ''
+            prev_cname = ''
+            relevant_items = ['char', 'space', 'tab', 'newline']
             for char_node in char_nodes:
-                if chars:
+                cname = char_node.name
+                if chars and prev_cname in relevant_items and cname in relevant_items:
                     chars += ', '
-                if char_node.name == 'char':
+                if cname == 'char':
                     chars += "'{}'".format(char_node.text)
-                elif char_node.name in ['space', 'tab', 'newline']:
-                    chars += "'[]'".format({
+                elif cname in ['space', 'tab', 'newline']:
+                    chars += "'{}'".format({
                                             'space': ' ',
-                                            'tab': '\t',
-                                            'newline': '\n'
-                                            }[char_node.name])
+                                            'tab': '\\t',
+                                            'newline': '\\n'
+                                            }[cname])
+                prev_cname = cname
             call = "characters({})".format(chars)
             if negate:
                 call += '.negate()'
+        elif name in ['space', 'tab', 'newline']:
+            call = "single_char('{}')".format({
+                                                  'space': ' ',
+                                                  'tab': '\\t',
+                                                  'newline': '\\n'
+                                              }[name])
         else:
-            call = '<todo>()'
+            raise GeneratorError("Unsupported grammar element '{}'".format(name))
         id_nodes = ast['id']
         if id_nodes:
             id_node = id_nodes[0]
@@ -95,7 +143,7 @@ class Generator(object):
         if use_whitespace:
             ws = 'one_to_many(_whitespace())'
             if mult.name == 'zero-to-one':
-                res = call
+                res = 'optional({})'.format(call)
             elif mult.name == 'one-to-many':
                 res = 'fork([{0}, many(fork([{1}, {0}]))])'.format(call, ws)
             elif mult.name == 'many':
@@ -106,7 +154,7 @@ class Generator(object):
             return res
         else:
             fn_name = {
-                'zero-to-one': 'zero_to_one',
+                'zero-to-one': 'optional',
                 'one-to-many': 'one_to_many',
                 'many': 'many'
             }[mult.name]
@@ -127,7 +175,7 @@ class Generator(object):
             if item.name == 'no-ws':
                 pass
             elif item.name == 'optional-ws':
-                self.__writeln('curr = curr > zero_to_many(_whitespace())')
+                self.__writeln('curr = curr > many(_whitespace())')
             else:
                 if prev_item and prev_item.name not in ['no-ws', 'optional-ws']:
                     self.__writeln('curr = curr > one_to_many(_whitespace())')
@@ -136,20 +184,27 @@ class Generator(object):
             prev_item = item
         self.__writeln('curr > end')
 
+    def __generate_comp_body(self, comp):
+        call = self.__create_call(comp.ast_children[0])
+        self.__writeln('start > {} > end'.format(call))
+
     def __generate_internal_functions(self):
         fn_ids = list(self.__functions.keys())
         fn_ids.sort()
         for fn_id in fn_ids:
-            self.__writeln('def {}():'.format(fn_id))
+            self.__writeln('@group()')
+            self.__writeln('def {}(self, start, end):'.format(fn_id))
             self.__indent()
-            self.__generate_fn_body(self.__functions[fn_id])
+            body = self.__functions[fn_id]
+            for line in body:
+                self.__writeln(line)
             self.__dedent()
             self.__writeln()
             self.__writeln()
 
     def __create_fn(self, ast):
         fn_id = self.__fn_id_creator.create_id(ast.name)
-        self.__functions[fn_id] = ast
+        self.__functions[fn_id] = self.__create_fn_body(ast)
         return fn_id
 
     def __indent(self):
@@ -159,7 +214,7 @@ class Generator(object):
         self.__indent_level -= 1
 
     def __writeln(self, text=''):
-        text = self.__indent_level * '\t' + text
+        text = self.__indent_level * self.__indent_size * ' ' + text
         self.__output.writeln(text)
 
 

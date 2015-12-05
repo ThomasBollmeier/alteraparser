@@ -2,7 +2,6 @@ import unittest
 from alteraparser.io.string_input import StringInput
 from alteraparser.io.output import ConsoleOutput
 from alteraparser.codegen.generator import Generator
-from alteraparser.bnf.grammar import *
 
 
 class GeneratorTest(unittest.TestCase):
