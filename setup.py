@@ -13,7 +13,7 @@ setup(
 
     name='alteraparser',
 
-    version='0.7.5b1',
+    version='0.9.5b2',
 
     description='A simple parser and grammar definition library',
     long_description=long_description,
@@ -32,7 +32,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',

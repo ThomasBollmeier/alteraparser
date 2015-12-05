@@ -12,6 +12,8 @@ class BnfGrammarTest(unittest.TestCase):
         code = """
             WHITESPACE = <space> | <tab> | <newline>;
 
+            dummy = [^?]?;
+
             alpha = 'a'..'z' | 'A'..'Z';
 
             alpha_num = alpha | '0'..'9';
@@ -25,7 +27,7 @@ class BnfGrammarTest(unittest.TestCase):
             call = '(' &? expr#callee expr#arg* &? ')';
 
             @grammar
-            my_lisp = call+;
+            my_lisp = WHITESPACE? call+ WHITESPACE?;
         """
         ast = self.parser.parse_string(code)
         self.assertIsNotNone(ast)
