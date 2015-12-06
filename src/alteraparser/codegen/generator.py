@@ -1,19 +1,25 @@
 from alteraparser.parser import Parser
 from alteraparser.bnf.grammar import bnf_grammar
 from alteraparser.io.output import BufferedOutput
+import re
 
 
 class Generator(object):
 
     def __init__(self, output):
         self.__bnf_parser = Parser(bnf_grammar)
+
         self.__output = output
         self.__indent_level = 0
         self.__indent_size = 4
+
         self.__fn_id_creator = FnIdCreator()
         self.__functions = {}
 
-    def generate_parser(self, grammar_input_stream):
+        self.__edit_section_start = re.compile(r'\s*#--beginedit\s+(\S+)\s*$')
+        self.__edit_section_end = re.compile(r'\s*#--endedit\s*$')
+
+    def generate_parser(self, grammar_input_stream, edit_sections={}):
         self.__writeln('from alteraparser import *')
         self.__writeln('from alteraparser.ast import AST')
         self.__writeln('from alteraparser.parser import Parser')
@@ -30,7 +36,7 @@ class Generator(object):
         self.__writeln()
 
         for rule in ast.ast_children:
-            self.__generate_rule(rule)
+            self.__generate_rule(rule, edit_sections)
         self.__generate_internal_functions()
 
     def __find_grammar_name(self, ast):
@@ -39,12 +45,19 @@ class Generator(object):
                 return rule.ast_children[0].text
         return ''
 
-    def __generate_rule(self, rule):
+    def __generate_rule(self, rule, edit_sections):
         rule_name = rule.ast_children[0].text.lower()
         unique = rule.ast_children[2].text == 'true'
         self.__writeln("def _{}_trnsf(ast):".format(rule_name))
         self.__indent()
-        self.__writeln('return ast')
+        self.__writeln('#--beginedit {}'.format(rule_name))
+        if rule_name in edit_sections:
+            lines = edit_sections[rule_name]
+            for line in lines:
+                self.__output.writeln(line) #<-- ignore indentation!
+        else:
+            self.__writeln('return ast')
+        self.__writeln('#--endedit')
         self.__dedent()
         self.__writeln()
         self.__writeln()
@@ -64,7 +77,7 @@ class Generator(object):
     def __generate_fn_body(self, ast):
         body = self.__create_fn_body(ast)
         for line in body:
-            self.__writeln(line)
+            self.__output.writeln(line)  # indentation already done
 
     def __create_fn_body(self, ast):
         saved_output = self.__output
@@ -216,6 +229,32 @@ class Generator(object):
     def __writeln(self, text=''):
         text = self.__indent_level * self.__indent_size * ' ' + text
         self.__output.writeln(text)
+
+    def scan_for_edit_sections(self, stream):
+        edit_sections = {}
+        section_name = ''
+        lines = []
+        line = ''
+        while stream.has_next_char():
+            ch = stream.get_next_char()
+            if ch != '\n':
+                line += ch
+            else:
+                if not section_name:
+                    match = self.__edit_section_start.match(line)
+                    if match:
+                        section_name = match.group(1)
+                        lines = []
+                else:
+                    match = self.__edit_section_end.match(line)
+                    if match:
+                        edit_sections[section_name] = lines
+                        section_name = ''
+                        lines = []
+                    else:
+                        lines.append(line)
+                line = ''
+        return edit_sections
 
 
 class FnIdCreator(object):

@@ -4,6 +4,7 @@ Syntax: python altparsgen.py <grammar_file> [<output_file>]
 """
 
 import sys
+import os
 from alteraparser.io.file_input import FileInput
 from alteraparser.io.output import ConsoleOutput, FileOutput
 from alteraparser.codegen.generator import Generator
@@ -15,18 +16,25 @@ if len(sys.argv) < 2:
 
 grammar_path = sys.argv[1]
 if len(sys.argv) > 2:
-    output = FileOutput(sys.argv[2])
-    write_to_file = True
+    out_file_path = sys.argv[2]
+    output = FileOutput(out_file_path)
 else:
+    out_file_path = ''
     output = ConsoleOutput()
-    write_to_file = False
 
 generator = Generator(output)
 
-if write_to_file:
+if out_file_path:
+    if os.path.exists(out_file_path):
+        file_in = FileInput(out_file_path)
+        edit_sections = generator.scan_for_edit_sections(file_in)
+    else:
+        edit_sections = {}
     output.open()
+else:
+    edit_sections = {}
 
-generator.generate_parser(FileInput(grammar_path))
+generator.generate_parser(FileInput(grammar_path), edit_sections)
 
-if write_to_file:
+if out_file_path:
     output.close()

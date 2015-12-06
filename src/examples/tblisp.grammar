@@ -13,4 +13,4 @@ expr = var_name | call;
 call = '(' &? expr#callee expr#arg* &? ')';
 
 @grammar
-tblisp = WHITESPACE? call+ WHITESPACE?;
+tblisp = WHITESPACE? call#content+ WHITESPACE?;
