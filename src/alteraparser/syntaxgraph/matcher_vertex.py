@@ -27,3 +27,11 @@ class MatcherVertex(Vertex):
         self.__chars = set(original.__chars)
         self.__negated = original.__negated
 
+    def __str__(self):
+        chars = '[' + ','.join(self.__chars) + ']'
+        if self.__negated:
+            return 'MATCH: NOT {}'.format(chars)
+        else:
+            return 'MATCH: {}'.format(chars)
+
+

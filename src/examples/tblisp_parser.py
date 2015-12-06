@@ -22,7 +22,7 @@ def _whitespace(self, start, end):
 
 def _comment_trnsf(ast):
     #--beginedit comment
-    return AST('comment', text=ast.text[1:-1])
+    return AST('comment', text=ast.text[1:])
     #--endedit
 
 
@@ -31,7 +31,6 @@ def _comment(self, start, end):
     curr = start
     curr = curr > keyword(';')
     curr = curr > many(characters('\n').negate())
-    curr = curr > single_char('\n')
     curr > end
 
 
@@ -181,131 +180,135 @@ def _tblisp_trnsf(ast):
     #--endedit
 
 
-@group(name='tblisp', is_unique=False, transform_ast_fn=_tblisp_trnsf)
-def tblisp(self, start, end):
-    curr = start
-    curr = curr > optional(fork([_whitespace(), many(fork([one_to_many(_whitespace()), _whitespace()]))]))
-    curr = curr > one_to_many(_whitespace())
-    curr = curr > fork([_expr().set_id('content'), many(fork([one_to_many(_whitespace()), _expr().set_id('content')]))])
-    curr = curr > one_to_many(_whitespace())
-    curr = curr > optional(fork([_whitespace(), many(fork([one_to_many(_whitespace()), _whitespace()]))]))
-    curr > end
+def tblisp():
+    branches = []
+    branches.append(_branch_16())
+    return grammar('tblisp', branches, _tblisp_trnsf)
 
 
 @group()
 def _branch_1(self, start, end):
-        curr = start
-        curr = curr > single_char(' ')
-        curr > end
+    curr = start
+    curr = curr > single_char(' ')
+    curr > end
 
 
 @group()
 def _branch_10(self, start, end):
-        curr = start
-        curr = curr > _var_name()
-        curr > end
+    curr = start
+    curr = curr > _var_name()
+    curr > end
 
 
 @group()
 def _branch_11(self, start, end):
-        curr = start
-        curr = curr > _call()
-        curr > end
+    curr = start
+    curr = curr > _call()
+    curr > end
 
 
 @group()
 def _branch_12(self, start, end):
-        curr = start
-        curr = curr > _callee()
-        curr > end
+    curr = start
+    curr = curr > _callee()
+    curr > end
 
 
 @group()
 def _branch_13(self, start, end):
-        curr = start
-        curr = curr > _string()
-        curr > end
+    curr = start
+    curr = curr > _string()
+    curr > end
 
 
 @group()
 def _branch_14(self, start, end):
-        curr = start
-        curr = curr > _call()
-        curr > end
+    curr = start
+    curr = curr > _call()
+    curr > end
 
 
 @group()
 def _branch_15(self, start, end):
-        curr = start
-        curr = curr > _comment()
-        curr > end
+    curr = start
+    curr = curr > _comment()
+    curr > end
+
+
+@group()
+def _branch_16(self, start, end):
+    curr = start
+    curr = curr > many(_whitespace())
+    curr = curr > fork([_expr().set_id('content'), many(fork([one_to_many(_whitespace()), _expr().set_id('content')]))])
+    curr = curr > many(_whitespace())
+    curr > end
 
 
 @group()
 def _branch_2(self, start, end):
-        curr = start
-        curr = curr > single_char('\t')
-        curr > end
+    curr = start
+    curr = curr > single_char('\t')
+    curr > end
 
 
 @group()
 def _branch_3(self, start, end):
-        curr = start
-        curr = curr > single_char('\n')
-        curr > end
+    curr = start
+    curr = curr > single_char('\n')
+    curr > end
 
 
 @group()
 def _branch_4(self, start, end):
-        curr = start
-        curr = curr > char_range('a', 'z')
-        curr > end
+    curr = start
+    curr = curr > char_range('a', 'z')
+    curr > end
 
 
 @group()
 def _branch_5(self, start, end):
-        curr = start
-        curr = curr > char_range('A', 'Z')
-        curr > end
+    curr = start
+    curr = curr > char_range('A', 'Z')
+    curr > end
 
 
 @group()
 def _branch_6(self, start, end):
-        curr = start
-        curr = curr > _alpha()
-        curr > end
+    curr = start
+    curr = curr > _alpha()
+    curr > end
 
 
 @group()
 def _branch_7(self, start, end):
-        curr = start
-        curr = curr > _digit()
-        curr > end
+    curr = start
+    curr = curr > _digit()
+    curr > end
 
 
 @group()
 def _branch_8(self, start, end):
-        curr = start
-        curr = curr > _alpha_num()
-        curr > end
+    curr = start
+    curr = curr > _alpha_num()
+    curr > end
 
 
 @group()
 def _branch_9(self, start, end):
-        curr = start
-        curr = curr > keyword('-')
-        curr = curr > _alpha_num()
-        curr > end
+    curr = start
+    curr = curr > keyword('-')
+    curr = curr > _alpha_num()
+    curr > end
 
 
 @group()
 def _branches_1(self, start, end):
-        start > _branch_8() > end
-        start > _branch_9() > end
+    start > _branch_8() > end
+    start > _branch_9() > end
 
 
 @group()
 def _comp_1(self, start, end):
-        start > _branches_1() > end
+    start > _branches_1() > end
 
 

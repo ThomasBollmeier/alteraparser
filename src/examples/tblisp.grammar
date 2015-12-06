@@ -1,6 +1,6 @@
 WHITESPACE = <space> | <tab> | <newline>;
 
-comment = ';' & [^<newline>]&* & <newline>;
+comment = ';' & [^<newline>]&*;
 
 alpha = 'a'..'z' | 'A'..'Z';
 
@@ -21,4 +21,4 @@ call = '(' &? callee#callee argument#arg* &? ')';
 expr = call | comment;
 
 @grammar
-tblisp = WHITESPACE* expr#content+ WHITESPACE*;
+tblisp = WHITESPACE&* & expr#content+ & WHITESPACE&*;

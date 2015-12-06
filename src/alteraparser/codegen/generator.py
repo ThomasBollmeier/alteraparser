@@ -36,7 +36,10 @@ class Generator(object):
         self.__writeln()
 
         for rule in ast.ast_children:
-            self.__generate_rule(rule, edit_sections)
+            if rule.name != 'grammar':
+                self.__generate_rule(rule, edit_sections)
+            else:
+                self.__generate_grammar(rule, edit_sections)
         self.__generate_internal_functions()
 
     def __find_grammar_name(self, ast):
@@ -45,28 +48,55 @@ class Generator(object):
                 return rule.ast_children[0].text
         return ''
 
-    def __generate_rule(self, rule, edit_sections):
-        rule_name = rule.ast_children[0].text.lower()
-        unique = rule.ast_children[2].text == 'true'
-        self.__writeln("def _{}_trnsf(ast):".format(rule_name))
+    def __generate_grammar(self, grammar, edit_sections):
+        name = grammar.ast_children[0].text.lower()
+        self.__writeln("def _{}_trnsf(ast):".format(name))
         self.__indent()
-        self.__writeln('#--beginedit {}'.format(rule_name))
-        if rule_name in edit_sections:
-            lines = edit_sections[rule_name]
+        self.__generate_edit_section(name, edit_sections)
+        self.__dedent()
+        self.__writeln()
+        self.__writeln()
+        self.__writeln('def {}():'.format(name))
+        node = grammar.ast_children[1]
+        branches = []
+        if node.name == 'branches':
+            for it in node.ast_children:
+                branches.append(it)
+        else:
+            branches.append(node)
+        self.__indent()
+        self.__writeln('branches = []')
+        for branch in branches:
+            call = self.__create_call(branch)
+            self.__writeln('branches.append({})'.format(call))
+        line = "return grammar('{0}', branches, _{0}_trnsf)".format(name)
+        self.__writeln(line)
+        self.__dedent()
+        self.__writeln()
+        self.__writeln()
+
+    def __generate_edit_section(self, section_name, edit_sections):
+        self.__writeln('#--beginedit {}'.format(section_name))
+        if section_name in edit_sections:
+            lines = edit_sections[section_name]
             for line in lines:
                 self.__output.writeln(line) #<-- ignore indentation!
         else:
             self.__writeln('return ast')
         self.__writeln('#--endedit')
+
+    def __generate_rule(self, rule, edit_sections):
+        rule_name = rule.ast_children[0].text.lower()
+        unique = rule.ast_children[2].text == 'true'
+        self.__writeln("def _{}_trnsf(ast):".format(rule_name))
+        self.__indent()
+        self.__generate_edit_section(rule_name, edit_sections)
         self.__dedent()
         self.__writeln()
         self.__writeln()
         line = "@group(name='{0}', is_unique={1}, transform_ast_fn=_{0}_trnsf)".format(rule_name, unique)
         self.__writeln(line)
-        fn_name = rule_name
-        if rule.name != 'grammar':
-            fn_name = '_' + fn_name
-        line = 'def {}(self, start, end):'.format(fn_name)
+        line = 'def _{}(self, start, end):'.format(rule_name)
         self.__writeln(line)
         self.__indent()
         self.__generate_fn_body(rule.ast_children[1])
@@ -210,7 +240,7 @@ class Generator(object):
             self.__indent()
             body = self.__functions[fn_id]
             for line in body:
-                self.__writeln(line)
+                self.__output.writeln(line)
             self.__dedent()
             self.__writeln()
             self.__writeln()

@@ -10,6 +10,7 @@ class MatchFinder(Processor):
         self.__buffer = []
         self.__match_char = None
         self.__stopped = False
+        self.__debug = False
 
     def process(self, vertex, path):
         if self.__stopped:
@@ -43,11 +44,20 @@ class MatchFinder(Processor):
         return self.__stopped
     stopped = property(get_stopped)
 
+    def debug_mode(self, debug=True):
+        self.__debug = debug
+        return self
+
     def __process_with_char_search(self, vertex):
         catg = vertex.get_category()
         if catg == VertexCategory.MATCHER:
+            if self.__debug:
+                print("Searching for '{}'".format(self.__match_char))
+                print(vertex)
             if vertex.matches(self.__match_char):
                 self.__path.append((vertex, self.__match_char))
+                if self.__debug:
+                    print('Match: {}'.format(self.__match_char))
                 self.__match_char = None
                 return ProcessingResult.CONTINUE
             else:
