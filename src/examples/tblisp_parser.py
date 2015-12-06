@@ -20,6 +20,21 @@ def _whitespace(self, start, end):
     start > _branch_3() > end
 
 
+def _comment_trnsf(ast):
+    #--beginedit comment
+    return AST('comment', text=ast.text[1:-1])
+    #--endedit
+
+
+@group(name='comment', is_unique=False, transform_ast_fn=_comment_trnsf)
+def _comment(self, start, end):
+    curr = start
+    curr = curr > keyword(';')
+    curr = curr > many(characters('\n').negate())
+    curr = curr > single_char('\n')
+    curr > end
+
+
 def _alpha_trnsf(ast):
     #--beginedit alpha
     return ast
@@ -57,6 +72,21 @@ def _alpha_num(self, start, end):
     start > _branch_7() > end
 
 
+def _string_trnsf(ast):
+    #--beginedit string
+    return AST('string', text=ast.text[1:-1])
+    #--endedit
+
+
+@group(name='string', is_unique=False, transform_ast_fn=_string_trnsf)
+def _string(self, start, end):
+    curr = start
+    curr = curr > keyword('"')
+    curr = curr > many(characters('"').negate())
+    curr = curr > keyword('"')
+    curr > end
+
+
 def _var_name_trnsf(ast):
     #--beginedit var_name
     return AST('varname', text=ast.text)
@@ -72,16 +102,28 @@ def _var_name(self, start, end):
     curr > end
 
 
-def _expr_trnsf(ast):
-    #--beginedit expr
+def _callee_trnsf(ast):
+    #--beginedit callee
     return ast.ast_children[0].ast_children[0]
     #--endedit
 
 
-@group(name='expr', is_unique=False, transform_ast_fn=_expr_trnsf)
-def _expr(self, start, end):
+@group(name='callee', is_unique=False, transform_ast_fn=_callee_trnsf)
+def _callee(self, start, end):
     start > _branch_10() > end
     start > _branch_11() > end
+
+
+def _argument_trnsf(ast):
+    #--beginedit argument
+    return ast.ast_children[0].ast_children[0]
+    #--endedit
+
+
+@group(name='argument', is_unique=False, transform_ast_fn=_argument_trnsf)
+def _argument(self, start, end):
+    start > _branch_12() > end
+    start > _branch_13() > end
 
 
 def _call_trnsf(ast):
@@ -108,12 +150,24 @@ def _call(self, start, end):
     curr = start
     curr = curr > keyword('(')
     curr = curr > many(_whitespace())
-    curr = curr > _expr().set_id('callee')
+    curr = curr > _callee().set_id('callee')
     curr = curr > one_to_many(_whitespace())
-    curr = curr > optional(fork([_expr().set_id('arg'), many(fork([one_to_many(_whitespace()), _expr().set_id('arg')]))]))
+    curr = curr > optional(fork([_argument().set_id('arg'), many(fork([one_to_many(_whitespace()), _argument().set_id('arg')]))]))
     curr = curr > many(_whitespace())
     curr = curr > keyword(')')
     curr > end
+
+
+def _expr_trnsf(ast):
+    #--beginedit expr
+    return ast.ast_children[0].ast_children[0]
+    #--endedit
+
+
+@group(name='expr', is_unique=False, transform_ast_fn=_expr_trnsf)
+def _expr(self, start, end):
+    start > _branch_14() > end
+    start > _branch_15() > end
 
 
 def _tblisp_trnsf(ast):
@@ -130,11 +184,11 @@ def _tblisp_trnsf(ast):
 @group(name='tblisp', is_unique=False, transform_ast_fn=_tblisp_trnsf)
 def tblisp(self, start, end):
     curr = start
-    curr = curr > optional(_whitespace())
+    curr = curr > optional(fork([_whitespace(), many(fork([one_to_many(_whitespace()), _whitespace()]))]))
     curr = curr > one_to_many(_whitespace())
-    curr = curr > fork([_call().set_id('content'), many(fork([one_to_many(_whitespace()), _call().set_id('content')]))])
+    curr = curr > fork([_expr().set_id('content'), many(fork([one_to_many(_whitespace()), _expr().set_id('content')]))])
     curr = curr > one_to_many(_whitespace())
-    curr = curr > optional(_whitespace())
+    curr = curr > optional(fork([_whitespace(), many(fork([one_to_many(_whitespace()), _whitespace()]))]))
     curr > end
 
 
@@ -156,6 +210,34 @@ def _branch_10(self, start, end):
 def _branch_11(self, start, end):
         curr = start
         curr = curr > _call()
+        curr > end
+
+
+@group()
+def _branch_12(self, start, end):
+        curr = start
+        curr = curr > _callee()
+        curr > end
+
+
+@group()
+def _branch_13(self, start, end):
+        curr = start
+        curr = curr > _string()
+        curr > end
+
+
+@group()
+def _branch_14(self, start, end):
+        curr = start
+        curr = curr > _call()
+        curr > end
+
+
+@group()
+def _branch_15(self, start, end):
+        curr = start
+        curr = curr > _comment()
         curr > end
 
 

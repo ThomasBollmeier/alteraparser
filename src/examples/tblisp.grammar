@@ -1,16 +1,24 @@
 WHITESPACE = <space> | <tab> | <newline>;
 
+comment = ';' & [^<newline>]&* & <newline>;
+
 alpha = 'a'..'z' | 'A'..'Z';
 
 digit = '0'..'9';
 
 alpha_num = alpha | digit;
 
+string = '"' & [^"]&* & '"';
+
 var_name = alpha & ( alpha_num | '-' & alpha_num )&* & [?]?;
 
-expr = var_name | call;
+callee = var_name | call;
 
-call = '(' &? expr#callee expr#arg* &? ')';
+argument = callee | string;
+
+call = '(' &? callee#callee argument#arg* &? ')';
+
+expr = call | comment;
 
 @grammar
-tblisp = WHITESPACE? call#content+ WHITESPACE?;
+tblisp = WHITESPACE* expr#content+ WHITESPACE*;
