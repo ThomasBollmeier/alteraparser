@@ -13,7 +13,7 @@ setup(
 
     name='alteraparser',
 
-    version='1.0.0rc',
+    version='1.0.1',
 
     description='A simple parser and grammar definition library',
     long_description=long_description,
