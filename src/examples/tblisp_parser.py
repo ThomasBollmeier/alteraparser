@@ -7,6 +7,21 @@ def create_tblisp_parser():
     return Parser(tblisp())
 
 
+def _comment_trnsf(ast):
+    #--beginedit comment
+    return AST('comment', text=ast.text[1:-1])
+    #--endedit
+
+
+@group(name='comment', is_unique=False, transform_ast_fn=_comment_trnsf)
+def _comment(self, start, end):
+    curr = start
+    curr = curr > keyword(';')
+    curr = curr > many(characters('\n').negate())
+    curr = curr > single_char('\n')
+    curr > end
+
+
 def _whitespace_trnsf(ast):
     #--beginedit whitespace
     return ast
@@ -18,20 +33,7 @@ def _whitespace(self, start, end):
     start > _branch_1() > end
     start > _branch_2() > end
     start > _branch_3() > end
-
-
-def _comment_trnsf(ast):
-    #--beginedit comment
-    return AST('comment', text=ast.text[1:])
-    #--endedit
-
-
-@group(name='comment', is_unique=False, transform_ast_fn=_comment_trnsf)
-def _comment(self, start, end):
-    curr = start
-    curr = curr > keyword(';')
-    curr = curr > many(characters('\n').negate())
-    curr > end
+    start > _branch_4() > end
 
 
 def _alpha_trnsf(ast):
@@ -42,8 +44,8 @@ def _alpha_trnsf(ast):
 
 @group(name='alpha', is_unique=False, transform_ast_fn=_alpha_trnsf)
 def _alpha(self, start, end):
-    start > _branch_4() > end
     start > _branch_5() > end
+    start > _branch_6() > end
 
 
 def _digit_trnsf(ast):
@@ -67,8 +69,8 @@ def _alpha_num_trnsf(ast):
 
 @group(name='alpha_num', is_unique=False, transform_ast_fn=_alpha_num_trnsf)
 def _alpha_num(self, start, end):
-    start > _branch_6() > end
     start > _branch_7() > end
+    start > _branch_8() > end
 
 
 def _string_trnsf(ast):
@@ -109,8 +111,8 @@ def _callee_trnsf(ast):
 
 @group(name='callee', is_unique=False, transform_ast_fn=_callee_trnsf)
 def _callee(self, start, end):
-    start > _branch_10() > end
     start > _branch_11() > end
+    start > _branch_12() > end
 
 
 def _argument_trnsf(ast):
@@ -121,8 +123,8 @@ def _argument_trnsf(ast):
 
 @group(name='argument', is_unique=False, transform_ast_fn=_argument_trnsf)
 def _argument(self, start, end):
-    start > _branch_12() > end
     start > _branch_13() > end
+    start > _branch_14() > end
 
 
 def _call_trnsf(ast):
@@ -144,7 +146,7 @@ def _call_trnsf(ast):
     #--endedit
 
 
-@group(name='call', is_unique=False, transform_ast_fn=_call_trnsf)
+@group(name='call', is_unique=True, transform_ast_fn=_call_trnsf)
 def _call(self, start, end):
     curr = start
     curr = curr > keyword('(')
@@ -159,14 +161,15 @@ def _call(self, start, end):
 
 def _expr_trnsf(ast):
     #--beginedit expr
-    return ast.ast_children[0].ast_children[0]
+    return ast.ast_children[0]
     #--endedit
 
 
 @group(name='expr', is_unique=False, transform_ast_fn=_expr_trnsf)
 def _expr(self, start, end):
-    start > _branch_14() > end
-    start > _branch_15() > end
+    curr = start
+    curr = curr > _call()
+    curr > end
 
 
 def _tblisp_trnsf(ast):
@@ -182,7 +185,7 @@ def _tblisp_trnsf(ast):
 
 def tblisp():
     branches = []
-    branches.append(_branch_16())
+    branches.append(_branch_15())
     return grammar('tblisp', branches, _tblisp_trnsf)
 
 
@@ -196,47 +199,41 @@ def _branch_1(self, start, end):
 @group()
 def _branch_10(self, start, end):
     curr = start
-    curr = curr > _var_name()
+    curr = curr > keyword('-')
+    curr = curr > _alpha_num()
     curr > end
 
 
 @group()
 def _branch_11(self, start, end):
     curr = start
-    curr = curr > _call()
+    curr = curr > _var_name()
     curr > end
 
 
 @group()
 def _branch_12(self, start, end):
     curr = start
-    curr = curr > _callee()
+    curr = curr > _call()
     curr > end
 
 
 @group()
 def _branch_13(self, start, end):
     curr = start
-    curr = curr > _string()
+    curr = curr > _callee()
     curr > end
 
 
 @group()
 def _branch_14(self, start, end):
     curr = start
-    curr = curr > _call()
+    curr = curr > _string()
     curr > end
 
 
 @group()
 def _branch_15(self, start, end):
-    curr = start
-    curr = curr > _comment()
-    curr > end
-
-
-@group()
-def _branch_16(self, start, end):
     curr = start
     curr = curr > many(_whitespace())
     curr = curr > fork([_expr().set_id('content'), many(fork([one_to_many(_whitespace()), _expr().set_id('content')]))])
@@ -261,50 +258,49 @@ def _branch_3(self, start, end):
 @group()
 def _branch_4(self, start, end):
     curr = start
-    curr = curr > char_range('a', 'z')
+    curr = curr > _comment()
     curr > end
 
 
 @group()
 def _branch_5(self, start, end):
     curr = start
-    curr = curr > char_range('A', 'Z')
+    curr = curr > char_range('a', 'z')
     curr > end
 
 
 @group()
 def _branch_6(self, start, end):
     curr = start
-    curr = curr > _alpha()
+    curr = curr > char_range('A', 'Z')
     curr > end
 
 
 @group()
 def _branch_7(self, start, end):
     curr = start
-    curr = curr > _digit()
+    curr = curr > _alpha()
     curr > end
 
 
 @group()
 def _branch_8(self, start, end):
     curr = start
-    curr = curr > _alpha_num()
+    curr = curr > _digit()
     curr > end
 
 
 @group()
 def _branch_9(self, start, end):
     curr = start
-    curr = curr > keyword('-')
     curr = curr > _alpha_num()
     curr > end
 
 
 @group()
 def _branches_1(self, start, end):
-    start > _branch_8() > end
     start > _branch_9() > end
+    start > _branch_10() > end
 
 
 @group()

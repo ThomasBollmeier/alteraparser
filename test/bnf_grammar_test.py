@@ -10,6 +10,8 @@ class BnfGrammarTest(unittest.TestCase):
 
     def test_rules(self):
         code = """
+            -- Tokens:
+
             WHITESPACE = <space> | <tab> | <newline>;
 
             dummy = [^?]?;
@@ -19,6 +21,8 @@ class BnfGrammarTest(unittest.TestCase):
             alpha_num = alpha | '0'..'9';
 
             var_name = alpha & (alpha_num | '-' & alpha_num)&*;
+
+            -- Production rules:
 
             block_comment = '/*'  &? ( [^*] | '*' & [^/] )&+ &? '*/';
 

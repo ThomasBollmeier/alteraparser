@@ -327,6 +327,16 @@ def charset_stmt(self, start, end):
     ]) > end
 
 
+def comment_trnsf(ast):
+    return AST('comment', text=ast.text[2:-1])
+
+
+@group(name='comment', is_unique=True, transform_ast_fn=comment_trnsf)
+def comment_stmt(self, start, end):
+    not_nl = single_char('\n').negate()
+    start > keyword('--') > many(not_nl) > single_char('\n') > end
+
+
 def bnf_grammar_trnsf(ast):
     res = AST('bnf-grammar')
     for child in ast['#grammar-element']:
@@ -337,7 +347,8 @@ def bnf_grammar_trnsf(ast):
 bnf_grammar = grammar('bnf',
                       [one_to_many(
                           fork([many(whitespace),
-                                prod_rule_stmt().set_id('grammar-element'),
+                                fork(prod_rule_stmt().set_id('grammar-element'),
+                                     comment_stmt().set_id('grammar-element')),
                                 many(whitespace)]))],
                       bnf_grammar_trnsf)
 

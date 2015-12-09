@@ -47,14 +47,15 @@ class Parser(object):
                 text = ''
                 node = AST(vertex.name, vertex.id)
                 stack.append(node)
-                if self.__debug:
+                if self.__debug and vertex.name:
                     print('PUSH -> {}'.format(vertex.name))
                     print(self.__stack_to_string(stack))
             elif vertex.is_group_end():
                 node = stack.pop()
-                if self.__debug:
+                if self.__debug and vertex.name:
                     print('POP <- {}'.format(vertex.name))
                     print(self.__stack_to_string(stack))
+                    print("TEXT: '{}'".format(text))
                 node.add_child(TextNode(text))
                 text = ''
                 id_ = node.id

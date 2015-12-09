@@ -11,6 +11,9 @@ class GeneratorTest(unittest.TestCase):
 
     def test_rules(self):
         code = """
+
+            -- Tokens:
+
             WHITESPACE = <space> | <tab> | <newline>;
 
             alpha = 'a'..'z' | 'A'..'Z';
@@ -20,6 +23,8 @@ class GeneratorTest(unittest.TestCase):
             var_name = alpha & (alpha_num | '-' & alpha_num)&*;
 
             no_special = [^*?!];
+
+            -- Rules:
 
             block_comment = '/*'  &? ( [^*] | '*' & [^/] )&+ &? '*/';
 

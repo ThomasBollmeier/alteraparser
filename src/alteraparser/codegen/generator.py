@@ -35,11 +35,11 @@ class Generator(object):
         self.__writeln()
         self.__writeln()
 
-        for rule in ast.ast_children:
-            if rule.name != 'grammar':
-                self.__generate_rule(rule, edit_sections)
-            else:
-                self.__generate_grammar(rule, edit_sections)
+        for node in ast.ast_children:
+            if node.name == 'rule':
+                self.__generate_rule(node, edit_sections)
+            elif node.name == 'grammar':
+                self.__generate_grammar(node, edit_sections)
         self.__generate_internal_functions()
 
     def __find_grammar_name(self, ast):
