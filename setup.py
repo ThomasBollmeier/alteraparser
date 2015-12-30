@@ -13,7 +13,7 @@ setup(
 
     name='alteraparser',
 
-    version='1.0.2',
+    version='1.1.0',
 
     description='A simple parser and grammar definition library',
     long_description=long_description,
@@ -51,7 +51,7 @@ setup(
     ],
 
     keywords='parser development',
-    
+
     scripts=['src/scripts/altparsgen'],
 
     packages=['alteraparser',

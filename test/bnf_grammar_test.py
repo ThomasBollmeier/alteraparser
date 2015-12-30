@@ -10,6 +10,10 @@ class BnfGrammarTest(unittest.TestCase):
 
     def test_rules(self):
         code = """
+            -- Configuration:
+
+            set config.case_sensitive on;
+
             -- Tokens:
 
             WHITESPACE = <space> | <tab> | <newline>;
@@ -33,6 +37,7 @@ class BnfGrammarTest(unittest.TestCase):
             @grammar
             my_lisp = WHITESPACE? call+ WHITESPACE?;
         """
+
         ast = self.parser.parse_string(code)
         self.assertIsNotNone(ast)
         print(ast.to_xml())

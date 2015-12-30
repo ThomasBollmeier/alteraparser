@@ -235,7 +235,7 @@ def branch_trnsf(ast):
 @group('branch', transform_ast_fn=branch_trnsf)
 def branch_stmt(self, start, end):
     global ws, terminal, rule_name, whitespace,\
-        special_char, cardinality, ampersand, hash_char, opt_ws
+        special_char, cardinality, ampersand, hash_char, id_name, opt_ws
     v = start.clone()
     start > fork([fork(
         ws,
@@ -337,6 +337,30 @@ def comment_stmt(self, start, end):
     start > keyword('--') > many(not_nl) > single_char('\n') > end
 
 
+def option_trnsf(ast):
+    res = AST('option')
+    name = ast['#name'][0].text
+    value = ast['#value'][0].text
+    res.add_child(AST('name', text=name))
+    res.add_child(AST('value', text=value))
+    return res
+
+
+@group(name='option', is_unique=True, transform_ast_fn=option_trnsf)
+def option_stmt(self, start, end):
+    global whitespace, semicolon
+    start > \
+        keyword('set') > \
+        one_to_many(whitespace) > \
+        keyword('config.') > \
+        fork(keyword('case_sensitive')).set_id('name') > \
+        one_to_many(whitespace) > \
+        fork(keyword('on'), keyword('off')).set_id('value') > \
+        many(whitespace) > \
+        semicolon.clone() > \
+        end
+
+
 def bnf_grammar_trnsf(ast):
     res = AST('bnf-grammar')
     for child in ast['#grammar-element']:
@@ -344,11 +368,14 @@ def bnf_grammar_trnsf(ast):
         res.add_child(child)
     return res
 
-bnf_grammar = grammar('bnf',
-                      [one_to_many(
-                          fork([many(whitespace),
-                                fork(prod_rule_stmt().set_id('grammar-element'),
-                                     comment_stmt().set_id('grammar-element')),
-                                many(whitespace)]))],
-                      bnf_grammar_trnsf)
 
+bnf_grammar = grammar('bnf', [one_to_many(
+    fork([
+        many(whitespace),
+        fork(
+            option_stmt().set_id('grammar-element'),
+            comment_stmt().set_id('grammar-element'),
+            prod_rule_stmt().set_id('grammar-element')),
+        many(whitespace)
+        ]))],
+        bnf_grammar_trnsf)

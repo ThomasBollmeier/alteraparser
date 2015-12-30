@@ -12,6 +12,10 @@ class GeneratorTest(unittest.TestCase):
     def test_rules(self):
         code = """
 
+            -- Configuration:
+
+            set config.case_sensitive off;
+
             -- Tokens:
 
             WHITESPACE = <space> | <tab> | <newline>;
