@@ -18,13 +18,13 @@ class BnfGrammarTest(unittest.TestCase):
 
             WHITESPACE = <space> | <tab> | <newline>;
 
-            dummy = [^?]?;
+            DUMMY = [^?]?;
 
-            alpha = 'a'..'z' | 'A'..'Z';
+            ALPHA = 'a'..'z' | 'A'..'Z';
 
-            alpha_num = alpha | '0'..'9';
+            ALPHA_NUM = ALPHA | '0'..'9';
 
-            var_name = alpha & (alpha_num | '-' & alpha_num)&*;
+            VAR_NAME = ALPHA & (ALPHA_NUM | '-' & ALPHA_NUM)&*;
 
             -- Production rules:
 

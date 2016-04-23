@@ -25,7 +25,7 @@ setup(
     #url='', TODO: create website for alteraparser
 
     author='Thomas Bollmeier',
-    author_email='tbollmeier@web.de',
+    author_email='entwickler@tbollmeier.de',
 
     # Choose your license
     license='MIT',
