@@ -1,41 +1,39 @@
 #!/usr/bin/env python3
 """
 Script to generate a parser from a grammar file
-Syntax: python altparsgen.py <grammar_file> [<output_file>]
 """
 
-import sys
 import os
+from argparse import ArgumentParser
 from alteraparser.io.file_input import FileInput
 from alteraparser.io.output import ConsoleOutput, FileOutput
 from alteraparser.codegen.generator import Generator
+from alteraparser import VERSION
 
+def create_output(filepath):
+    return filepath and FileOutput(filepath) or ConsoleOutput()
 
-if len(sys.argv) < 2:
-    print('SYNTAX: python3 altparsgen.py <grammar_file> [<output_file>]')
-    exit(1)
-
-grammar_path = sys.argv[1]
-if len(sys.argv) > 2:
-    out_file_path = sys.argv[2]
-    output = FileOutput(out_file_path)
-else:
-    out_file_path = ''
-    output = ConsoleOutput()
-
-generator = Generator(output)
-
-if out_file_path:
-    if os.path.exists(out_file_path):
-        file_in = FileInput(out_file_path)
-        edit_sections = generator.scan_for_edit_sections(file_in)
+def create_edit_sections(filepath):
+    if filepath:
+        if os.path.exists(filepath):
+            file_in = FileInput(filepath)
+            edit_sections = generator.scan_for_edit_sections(file_in)
+        else:
+            edit_sections = {}
     else:
         edit_sections = {}
-    output.open()
-else:
-    edit_sections = {}
+    return edit_sections
+
+# setup parser
+parser = ArgumentParser(description='Generate a parser for a grammar')
+parser.add_argument('grammar', metavar='GRAMMAR_FILE', help='input grammar file')
+parser.add_argument('-o', '--out', dest='outfile', metavar='OUT_FILE', help='output file for generated parser')
+parser.add_argument('--version', action='version', help='show version', version=VERSION)
+
+options = parser.parse_args()
+
+grammar_path = options.grammar
+generator = Generator(create_output(options.outfile))
+edit_sections = create_edit_sections(options.outfile)
 
 generator.generate_parser(FileInput(grammar_path), edit_sections)
-
-if out_file_path:
-    output.close()

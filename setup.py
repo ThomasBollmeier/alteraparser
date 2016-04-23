@@ -1,9 +1,13 @@
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
-from os import path
+from os import sep, path
 
 here = path.abspath(path.dirname(__file__))
+import sys
+sys.path.append(here + sep + 'src')
+from alteraparser import VERSION
+
 
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
@@ -13,7 +17,7 @@ setup(
 
     name='alteraparser',
 
-    version='1.1.0',
+    version=VERSION,
 
     description='A simple parser and grammar definition library',
     long_description=long_description,

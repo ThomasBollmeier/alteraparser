@@ -24,6 +24,9 @@ class Generator(object):
         }
 
     def generate_parser(self, grammar_input_stream, edit_sections={}):
+        
+        self.__output.open()
+        
         self.__generate_header()
         self.__writeln('from alteraparser import *')
         self.__writeln('from alteraparser.ast import AST')
@@ -48,6 +51,8 @@ class Generator(object):
             elif node.name == 'grammar':
                 self.__generate_grammar(node, edit_sections)
         self.__generate_internal_functions()
+        
+        self.__output.close()
 
     def __find_grammar_name(self, ast):
         for rule in ast.ast_children:

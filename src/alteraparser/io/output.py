@@ -2,6 +2,12 @@ import os
 
 
 class Output(object):
+    
+    def open(self):
+        pass
+    
+    def close(self):
+        pass
 
     def write(self, text):
         pass
