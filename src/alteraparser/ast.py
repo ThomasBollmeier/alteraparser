@@ -71,10 +71,15 @@ class AST(object):
 
     def _to_xml(self, xml, indent, indent_size):
         name = self.__name or 'ast'
+        if indent > 0:
+            name = 'altera:' + name
         new_xml = ' ' * (indent*indent_size)
         new_xml += '<{}'.format(name)
         if self.id:
-            new_xml += ' id = "{}"'.format(self.id)
+            new_xml += ' id="{}"'.format(self.id)
+        if indent == 0: # root element
+            new_xml += os.linesep + ' ' * (indent*indent_size)
+            new_xml += ' xmlns:altera="http://alteraparser.tbollmeier.de"'
         text = self.own_text
         children = self.ast_children
         closed = False
@@ -84,7 +89,7 @@ class AST(object):
             new_xml += '/>'
             closed = True
         if text:
-            new_xml += text
+            new_xml += '<![CDATA[{}]]>'.format(text)
         if children:
             for child in children:
                 new_xml = child._to_xml(new_xml, indent+1, indent_size)
