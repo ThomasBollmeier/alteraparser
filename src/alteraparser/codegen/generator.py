@@ -248,12 +248,23 @@ class Generator(object):
             elif item.name == 'optional-ws':
                 self.__writeln('curr = curr > many(_whitespace())')
             else:
-                if prev_item and prev_item.name not in ['no-ws', 'optional-ws']:
-                    self.__writeln('curr = curr > one_to_many(_whitespace())')
                 call = self.__create_call(item)
-                self.__writeln('curr = curr > {}'.format(call))
+                if prev_item and prev_item.name not in ['no-ws', 'optional-ws']:
+                    if self.__at_least_card_one(item):
+                        self.__writeln('curr = curr > one_to_many(_whitespace())'), 
+                        self.__writeln('curr = curr > {}'.format(call))
+                    else:
+                        # The whitespace should not be required if the does not appear
+                        # => make it optional
+                        self.__writeln('curr = curr > optional(fork([one_to_many(_whitespace()), {}]))'.format(call))
+                else:
+                    self.__writeln('curr = curr > {}'.format(call))
             prev_item = item
         self.__writeln('curr > end')
+        
+    def __at_least_card_one(self, ast):
+        multiplicity = ast['cardinality'].ast_children[0]
+        return multiplicity.name not in ['zero-to-one', 'many']
 
     def __generate_comp_body(self, comp):
         call = self.__create_call(comp.ast_children[0])

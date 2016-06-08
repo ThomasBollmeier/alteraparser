@@ -63,7 +63,7 @@ class ParserTest(unittest.TestCase):
         if transformer_fn:
             loop_stmt = loop_stmt.transform_ast(transformer_fn)
 
-        return grammar('test', loop_stmt)
+        return grammar('test', [loop_stmt])
 
     def __transform_loop(self, ast):
         items = ast['#items'][0]

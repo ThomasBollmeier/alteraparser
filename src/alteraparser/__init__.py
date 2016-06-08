@@ -2,7 +2,7 @@ from alteraparser.syntaxgraph.matcher_vertex import MatcherVertex
 from alteraparser.syntaxgraph.final_vertex import FinalVertex
 from alteraparser.syntaxgraph.vertex_group import Multiples, Branches, VertexGroup
 
-VERSION = "1.2.3"
+VERSION = "1.2.4"
 
 def group(name=None, is_unique=False, transform_ast_fn=None):
     def init(self):
