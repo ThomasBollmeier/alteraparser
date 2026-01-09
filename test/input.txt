@@ -1,3 +1,0 @@
-LOOP AT people INTO person.
-
-ENDLOOP.

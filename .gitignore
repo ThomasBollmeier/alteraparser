@@ -1,6 +1,1 @@
 .idea
-*.egg-info
-dist
-build
-*.pyc
-alteraparser.wpr
