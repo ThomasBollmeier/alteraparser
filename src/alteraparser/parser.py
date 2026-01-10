@@ -1,5 +1,7 @@
 from alteraparser.ast_ import Ast
 from alteraparser.grammar import GrammarNodeType, Grammar, GrammarNode, RuleStartNode, RuleEndNode
+from alteraparser.lexer_grammar import LexerGrammar
+from alteraparser.lexer import Lexer
 from alteraparser.token_ import Token, TokenStream
 from typing import List, Optional
 
@@ -139,3 +141,48 @@ class Parser:
                     ast_stack[-1].add_child(ast_node)
 
         return ret
+
+
+class TextParser(Parser):
+    """A parser that combines lexing and parsing to build an AST from raw text.
+
+    The TextParser class first tokenizes the input text using a specified lexer grammar,
+    then parses the resulting tokens according to a grammar definition to construct an
+    Abstract Syntax Tree (AST). It handles both lexical and syntactical analysis, providing
+    a complete parsing solution.
+
+    Attributes:
+        _lexer_grammar (LexerGrammar): The lexer grammar used for tokenization.
+    """
+
+    def __init__(self, grammar: Grammar, lexer_grammar: LexerGrammar):
+        """Initialize the text parser with grammar and lexer grammar definitions.
+
+        Args:
+            grammar (Grammar): The grammar definition that specifies the syntax rules
+                             for parsing. Must be a valid Grammar instance.
+            lexer_grammar (LexerGrammar): The lexer grammar definition that specifies
+                                         the tokenization rules. Must be a valid
+                                         LexerGrammar instance.
+        """
+        super().__init__(grammar)
+        self._lexer_grammar = lexer_grammar
+
+    def parse_text(self, text: str) -> Optional[Ast]:
+        """Parse raw text input to produce an Abstract Syntax Tree (AST).
+
+        This method first tokenizes the input text using the defined lexer grammar,
+        then parses the resulting tokens according to the grammar rules to build an AST.
+
+        Args:
+            text (str): The raw text input to be parsed.
+
+        Returns:
+            Ast: The root node of the Abstract Syntax Tree representing the parsed
+                 structure.
+
+        Raises:
+            SyntaxError: If there are lexical or syntactical errors during parsing.
+        """
+        lexer = Lexer(self._lexer_grammar, text)
+        return self.parse(lexer)
