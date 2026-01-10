@@ -70,7 +70,10 @@ class Parser:
                         new_path.extend(follow_path[1:])
                         new_matched_paths.append(new_path)
             if not new_matched_paths:
-                raise SyntaxError("Unexpected token sequence")
+                line = expected_token.line
+                col = expected_token.column
+                value = expected_token.value
+                raise SyntaxError(f"Unexpected token @({line}, {col}): '{value}'")
             matched_paths = new_matched_paths
 
         # After processing all tokens, filter paths that can reach the end

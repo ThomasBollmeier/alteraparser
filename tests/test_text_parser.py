@@ -1,6 +1,9 @@
+import re
+
 from alteraparser.ast_ import AstStrWriter
 from tests.grammar4test import make_lexer_grammar_for_test, make_grammar_for_test
 from alteraparser.parser import TextParser
+import pytest
 
 def make_text_parser_for_test():
     lexer_grammar = make_lexer_grammar_for_test()
@@ -20,3 +23,13 @@ def test_text_parser_simple_expr():
     print("AST for simple expression:")
     ast_writer = AstStrWriter()
     print(ast_writer.write_ast_to_str(ast))
+
+def test_invalid_syntax():
+    parser = make_text_parser_for_test()
+
+    input_text = """
+        3 + * 5
+    """
+    expected_error = re.escape("Unexpected token @(2, 13): '*'")
+    with pytest.raises(SyntaxError, match=expected_error):
+        parser.parse_text(input_text)
