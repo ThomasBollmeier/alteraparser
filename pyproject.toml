@@ -5,6 +5,10 @@ authors = [
     { name = "Thomas Bollmeier", email = "developer@thomas-bollmeier.de" }
 ]
 description = "Alteraparser is a library that provides functions to define a grammar that can be passed to a parser."
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
 license = "MIT"
 license-files = ["LICENSE"]
 readme = "README.md"
