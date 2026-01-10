@@ -42,6 +42,14 @@ class GrammarNode:
         self.token_type = token_type
         self.children: List[GrammarNode] = []
 
+    def clone(self) -> 'GrammarNode':
+        """Create a clone of this grammar node.
+
+        Returns:
+            GrammarNode: A new instance that is a copy of this node, without children.
+        """
+        return GrammarNode(self.node_type, self.token_type)
+
     def add_child(self, child_node: 'GrammarNode'):
         """Add a child node to this grammar node.
 
@@ -180,6 +188,14 @@ class RuleStartNode(GrammarNode):
         GrammarNode.__init__(self, GrammarNodeType.RULE_START)
         self.rule = rule_object
 
+    def clone(self) -> GrammarNode:
+        """Create a clone of this rule start node.
+
+        Returns:
+            RuleStartNode: A new instance that is a copy of this node, without children.
+        """
+        return RuleStartNode(self.rule.clone())
+
     def get_children(self) -> List[GrammarNode]:
         """Get child nodes, ensuring the rule is expanded first.
 
@@ -217,6 +233,14 @@ class RuleEndNode(GrammarNode):
         """
         GrammarNode.__init__(self, GrammarNodeType.RULE_END)
         self.rule = rule_object
+
+    def clone(self) -> GrammarNode:
+        """Create a clone of this rule end node.
+
+        Returns:
+            RuleEndNode: A new instance that is a copy of this node, without children.
+        """
+        return RuleEndNode(self.rule.clone())
 
     def get_children(self) -> List[GrammarNode]:
         """Get child nodes.
@@ -270,6 +294,17 @@ class GrammarElement:
         """
         raise NotImplementedError
 
+    def clone(self) -> 'GrammarElement':
+        """Create a clone of this grammar element.
+
+        Returns:
+            GrammarElement: A new instance that is a copy of this element.
+
+        Raises:
+            NotImplementedError: This is an abstract method that must be implemented by subclasses.
+        """
+        raise NotImplementedError
+
 
 def connect(element1: GrammarElement, element2: GrammarElement):
     """Connect two grammar elements by linking their nodes.
@@ -307,6 +342,9 @@ class NormalElement(GrammarElement):
         GrammarElement.__init__(self)
         self.node = node
 
+    def clone(self) -> GrammarElement:
+        return NormalElement(self.node.clone())
+
     def get_in_node(self) -> GrammarNode:
         return self.node
 
@@ -333,6 +371,9 @@ class TokenElement(GrammarElement):
         """
         GrammarElement.__init__(self)
         self.node = GrammarNode(GrammarNodeType.TOKEN, token_type)
+
+    def clone(self) -> GrammarElement:
+        return TokenElement(self.node.token_type)
 
     def get_in_node(self) -> GrammarNode:
         return self.node
@@ -374,9 +415,12 @@ class Sequence(GrammarElement):
                                            Must be a non-empty list.
         """
         GrammarElement.__init__(self)
-        self.elements = elements
-        for i in range(len(elements) - 1):
-            connect(elements[i], elements[i + 1])
+        self.elements = [element.clone() for element in elements]
+        for i in range(len(self.elements) - 1):
+            connect(self.elements[i], self.elements[i + 1])
+
+    def clone(self) -> GrammarElement:
+        return Sequence(self.elements)
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (first element's input).
@@ -430,12 +474,15 @@ class Choice(GrammarElement):
                                            Must be a non-empty list.
         """
         GrammarElement.__init__(self)
-        self.branches = branches
+        self.branches = [branch.clone() for branch in branches]
         self.start_node = GrammarNode(GrammarNodeType.NORMAL)
         self.end_node = GrammarNode(GrammarNodeType.NORMAL)
-        for branch in branches:
+        for branch in self.branches:
             self.start_node.add_child(branch.get_in_node())
             branch.get_out_node().add_child(self.end_node)
+
+    def clone(self) -> GrammarElement:
+        return Choice(self.branches)
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the choice start node).
@@ -486,11 +533,15 @@ class Optional(GrammarElement):
             element (GrammarElement): The element that is optional.
         """
         GrammarElement.__init__(self)
+        self.element = element.clone()
         self.start_node = GrammarNode(GrammarNodeType.NORMAL)
         self.end_node = GrammarNode(GrammarNodeType.NORMAL)
-        self.start_node.add_child(element.get_in_node())
+        self.start_node.add_child(self.element.get_in_node())
         self.start_node.add_child(self.end_node)
-        element.get_out_node().add_child(self.end_node)
+        self.element.get_out_node().add_child(self.end_node)
+
+    def clone(self) -> GrammarElement:
+        return Optional(self.element.clone())
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the optional start node).
@@ -542,11 +593,15 @@ class Many(GrammarElement):
             element (GrammarElement): The element that can be repeated.
         """
         GrammarElement.__init__(self)
+        self.element = element.clone()
         self.start_node = GrammarNode(GrammarNodeType.NORMAL)
         self.end_node = GrammarNode(GrammarNodeType.NORMAL)
-        self.start_node.add_child(element.get_in_node())
+        self.start_node.add_child(self.element.get_in_node())
         self.start_node.add_child(self.end_node)
-        element.get_out_node().add_child(self.start_node)
+        self.element.get_out_node().add_child(self.start_node)
+
+    def clone(self) -> GrammarElement:
+        return Many(self.element.clone())
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the loop start node).
@@ -631,6 +686,9 @@ class Rule(GrammarElement):
         self.is_expanded = False
         self.start_node = RuleStartNode(self)
         self.end_node = RuleEndNode(self)
+
+    def clone(self) -> GrammarElement:
+        return Rule(self.grammar, self.name, self.expander)
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the rule start node).
