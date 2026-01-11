@@ -10,10 +10,13 @@ class LexerGrammar:
     def __init__(self):
         self.rules: List[Tuple[str, re.Pattern, bool]] = []
 
-    def add_rule(self, token_type: str, pattern: str, ignore: bool=False) -> 'LexerGrammar':
+    def add_rule(self, token_type: str, pattern: str, ignore: bool=False, case_insensitive: bool=False) -> 'LexerGrammar':
         if not pattern.startswith('^'):
             pattern = '^' + pattern
-        regex = re.compile(pattern)
+        if case_insensitive:
+            regex = re.compile(pattern, re.IGNORECASE)
+        else:
+            regex = re.compile(pattern)
         self.rules.append((token_type, regex, ignore))
         return self
 
