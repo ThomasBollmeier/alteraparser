@@ -25,7 +25,7 @@ def make_grammar_for_test() -> Grammar:
 
     def _trans_single_child(ast: Ast) -> Ast:
         if len(ast.children) == 1:
-            return ast.get_nth_child(0)
+            return ast[0]
         return ast
 
     @rule(grammar, "sum", is_start_rule=True)
@@ -50,7 +50,7 @@ def make_grammar_for_test() -> Grammar:
 
     @ast_transformer(grammar, "group")
     def _trans_group(ast: Ast) -> Ast:
-        return ast.get_nth_child(1)
+        return ast[1]
 
     @rule(grammar, "call")
     def _call(g):
@@ -60,7 +60,7 @@ def make_grammar_for_test() -> Grammar:
     @ast_transformer(grammar, "call")
     def _trans_call(ast: Ast) -> Ast:
         call_ast = Ast(name="call")
-        callee = ast.get_nth_child(0)
+        callee = ast[0]
         call_ast.add_child(Ast(name="callee", value=callee.value))
         args = Ast(name="arguments")
         call_ast.add_child(args)
@@ -68,7 +68,7 @@ def make_grammar_for_test() -> Grammar:
         if len(ast.children) > 3:  # There are arguments
             idx = 2
             while idx < len(ast.children) - 1:
-                arg_ast = ast.get_nth_child(idx)
+                arg_ast = ast[idx]
                 args.add_child(arg_ast)
                 idx += 2  # Skip commas
 

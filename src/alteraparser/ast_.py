@@ -16,6 +16,9 @@ class Ast:
     def get_children_by_name(self, name: str) -> list['Ast']:
         return [child for child in self.children if child.name == name]
 
+    def __getitem__(self, item):
+        return self.children[item]
+
 
 class AstStrWriter:
     def __init__(self, indent_size: int = 2):
