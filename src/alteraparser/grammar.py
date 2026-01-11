@@ -541,7 +541,7 @@ class Optional(GrammarElement):
         self.element.get_out_node().add_child(self.end_node)
 
     def clone(self) -> GrammarElement:
-        return Optional(self.element.clone())
+        return Optional(self.element)
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the optional start node).
@@ -601,7 +601,7 @@ class Many(GrammarElement):
         self.element.get_out_node().add_child(self.start_node)
 
     def clone(self) -> GrammarElement:
-        return Many(self.element.clone())
+        return Many(self.element)
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the loop start node).
