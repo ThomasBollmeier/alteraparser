@@ -1,8 +1,12 @@
+from typing import Any
+
+
 class Ast:
     def __init__(self, name: str, value=None):
         self.name = name
         self.value = value
         self.children: list[Ast] = []
+        self.attributes: dict[str, Any] = {}
 
     def add_child(self, child: 'Ast'):
         self.children.append(child)
@@ -15,6 +19,15 @@ class Ast:
 
     def get_children_by_name(self, name: str) -> list['Ast']:
         return [child for child in self.children if child.name == name]
+
+    def set_attr(self, name: str, value: Any=True):
+        self.attributes[name] = value
+
+    def get_attr(self, name: str) -> Any:
+        return self.attributes.get(name)
+
+    def has_attr(self, name: str) -> bool:
+        return name in self.attributes
 
     def __getitem__(self, item):
         return self.children[item]
