@@ -124,14 +124,16 @@ class Parser:
         for node in parse_path:
             if node.node_type == GrammarNodeType.RULE_START:
                 start_node: RuleStartNode = node  # type: ignore
-                ast_node = Ast(name=start_node.rule.name)
+                ast_node = Ast(name=start_node.rule.name, id_=start_node.get_id())
                 ast_stack.append(ast_node)
             elif node.node_type == GrammarNodeType.RULE_END:
                 completed_ast = ast_stack.pop()
                 end_node: RuleEndNode = node # type: ignore
                 transformer = end_node.rule.grammar.get_ast_transformer(end_node.rule.name)
                 if transformer:
+                    id_ = completed_ast.id
                     completed_ast = transformer(completed_ast)
+                    completed_ast.id = id_
                 if ast_stack:
                     ast_stack[-1].add_child(completed_ast)
                 else:
@@ -139,7 +141,7 @@ class Parser:
             elif node.node_type == GrammarNodeType.TOKEN:
                 token = tokens[token_idx]
                 token_idx += 1
-                ast_node = Ast(name=token.token_type, value=token.value)
+                ast_node = Ast(name=token.token_type, value=token.value, id_=node.get_id())
                 if ast_stack:
                     ast_stack[-1].add_child(ast_node)
 

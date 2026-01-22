@@ -14,7 +14,7 @@ def test_text_parser_simple_expr():
     parser = make_text_parser_for_test()
 
     input_text = """
-        3 + 5 * x * y(42)
+        3 + 5 * x * y(42, mult(a, b))
     """
     ast = parser.parse_text(input_text)
 

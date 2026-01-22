@@ -54,23 +54,21 @@ def make_grammar_for_test() -> Grammar:
 
     @rule(grammar, "call")
     def _call(g):
-        args = opt(seq(g.sum, many(seq(tok(lg.COMMA), g.sum))))
-        return seq(tok(lg.IDENT), tok(lg.LPAREN), args, tok(lg.RPAREN))
+        args = opt(seq(g.sum.set_id("arg"), many(seq(tok(lg.COMMA), g.sum.set_id("arg")))))
+        return seq(tok(lg.IDENT, "callee"), tok(lg.LPAREN), args, tok(lg.RPAREN))
 
     @ast_transformer(grammar, "call")
     def _trans_call(ast: Ast) -> Ast:
         call_ast = Ast(name="call")
-        callee = ast[0]
-        call_ast.add_child(Ast(name="callee", value=callee.value))
-        args = Ast(name="arguments")
-        call_ast.add_child(args)
 
-        if len(ast.children) > 3:  # There are arguments
-            idx = 2
-            while idx < len(ast.children) - 1:
-                arg_ast = ast[idx]
-                args.add_child(arg_ast)
-                idx += 2  # Skip commas
+        callee = ast.get_child_by_id("callee").value
+        call_ast.add_child(Ast(name="callee", value=callee))
+
+        args_ast = Ast(name="arguments")
+        call_ast.add_child(args_ast)
+        args = ast.get_children_by_id("arg")
+        for arg in args:
+            args_ast.add_child(arg)
 
         return call_ast
 

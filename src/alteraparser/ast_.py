@@ -2,11 +2,19 @@ from typing import Any
 
 
 class Ast:
-    def __init__(self, name: str, value=None):
+    def __init__(self, name: str, value=None, id_:str= ""):
         self.name = name
         self.value = value
+        self.id = id_
         self.children: list[Ast] = []
         self.attributes: dict[str, Any] = {}
+
+    def clone(self) -> 'Ast':
+        cloned_ast = Ast(self.name, self.value, self.id)
+        cloned_ast.attributes = self.attributes.copy()
+        for child in self.children:
+            cloned_ast.add_child(child.clone())
+        return cloned_ast
 
     def add_child(self, child: 'Ast'):
         self.children.append(child)
@@ -19,6 +27,28 @@ class Ast:
 
     def get_children_by_name(self, name: str) -> list['Ast']:
         return [child for child in self.children if child.name == name]
+
+    def get_child_by_id(self, id_: str, clear_id: bool=True) -> 'Ast | None':
+        for child in self.children:
+            if child.id == id_:
+                if clear_id:
+                    cloned_child = child.clone()
+                    cloned_child.id = ""
+                    return cloned_child
+                return child
+        return None
+
+    def get_children_by_id(self, id_: str, clear_id: bool=True) -> list['Ast']:
+        if clear_id:
+            ret = []
+            for child in self.children:
+                if child.id != id_:
+                    continue
+                cloned_child = child.clone()
+                cloned_child.id = ""
+                ret.append(cloned_child)
+            return ret
+        return [child for child in self.children if child.id == id_]
 
     def set_attr(self, name: str, value: Any=True):
         self.attributes[name] = value
@@ -46,16 +76,17 @@ class AstStrWriter:
         return self._output
 
     def _write_ast(self, ast: Ast):
+        id_str = f' id="{ast.id}"' if ast.id else ''
         if ast.value is None:
             if ast.children:
-                self._write_line(f'<{ast.name}>')
+                self._write_line(f'<{ast.name}{id_str}>')
             else:
-                self._write_line(f'<{ast.name}/>')
+                self._write_line(f'<{ast.name}{id_str}/>')
         else:
             if ast.children:
-                self._write_line(f'<{ast.name}> {ast.value}')
+                self._write_line(f'<{ast.name}{id_str}> {ast.value}')
             else:
-                self._write_line(f'<{ast.name}> {ast.value} </{ast.name}>')
+                self._write_line(f'<{ast.name}{id_str}> {ast.value} </{ast.name}>')
 
         self._indent_level += 1
 

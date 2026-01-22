@@ -30,16 +30,20 @@ class GrammarNode:
 
     def __init__(self,
                  node_type: GrammarNodeType,
-                 token_type: Option[str] = None):
+                 token_type: Option[str] = None,
+                 id_: str = ""
+                 ):
         """Initialize a grammar node.
 
         Args:
             node_type (GrammarNodeType): The type of node being created.
             token_type (str, optional): For TOKEN nodes, specifies which token type
                                        this node represents. Ignored for other node types.
+            id_ (str): An optional identifier for the grammar node.
         """
         self.node_type = node_type
         self.token_type = token_type
+        self.id = id_
         self.children: List[GrammarNode] = []
 
     def clone(self) -> 'GrammarNode':
@@ -48,7 +52,15 @@ class GrammarNode:
         Returns:
             GrammarNode: A new instance that is a copy of this node, without children.
         """
-        return GrammarNode(self.node_type, self.token_type)
+        return GrammarNode(self.node_type, self.token_type, self.id)
+
+    def get_id(self) -> str:
+        """Get the identifier of this grammar node.
+
+        Returns:
+            str: The identifier of the grammar node.
+        """
+        return self.id
 
     def add_child(self, child_node: 'GrammarNode'):
         """Add a child node to this grammar node.
@@ -194,7 +206,10 @@ class RuleStartNode(GrammarNode):
         Returns:
             RuleStartNode: A new instance that is a copy of this node, without children.
         """
-        return RuleStartNode(self.rule.clone())
+        return RuleStartNode(self.rule.clone()) # type: ignore
+
+    def get_id(self):
+        return self.rule.id
 
     def get_children(self) -> List[GrammarNode]:
         """Get child nodes, ensuring the rule is expanded first.
@@ -240,7 +255,7 @@ class RuleEndNode(GrammarNode):
         Returns:
             RuleEndNode: A new instance that is a copy of this node, without children.
         """
-        return RuleEndNode(self.rule.clone())
+        return RuleEndNode(self.rule.clone()) # type: ignore
 
     def get_children(self) -> List[GrammarNode]:
         """Get child nodes.
@@ -268,9 +283,14 @@ class GrammarElement:
     connected in a grammar graph.
     """
 
-    def __init__(self):
-        """Initialize a grammar element."""
+    def __init__(self, id_: str= ""):
+        """Initialize a grammar element.
+
+        Args:
+            id_ (str): An optional identifier for the grammar element.
+        """
         ...
+        self.id = id_
 
     def get_in_node(self) -> GrammarNode:
         """Get the entry point node for this grammar element.
@@ -363,17 +383,18 @@ class TokenElement(GrammarElement):
         node (GrammarNode): The TOKEN node representing this terminal.
     """
 
-    def __init__(self, token_type: str):
+    def __init__(self, token_type: str, id_: str= ""):
         """Initialize a token element.
 
         Args:
             token_type (str): The type of token this element represents.
+            id_ (str): An optional identifier for the grammar element.
         """
-        GrammarElement.__init__(self)
-        self.node = GrammarNode(GrammarNodeType.TOKEN, token_type)
+        GrammarElement.__init__(self, id_)
+        self.node = GrammarNode(GrammarNodeType.TOKEN, token_type, id_)
 
     def clone(self) -> GrammarElement:
-        return TokenElement(self.node.token_type)
+        return TokenElement(self.node.token_type, self.id)
 
     def get_in_node(self) -> GrammarNode:
         return self.node
@@ -382,18 +403,19 @@ class TokenElement(GrammarElement):
         return self.node
 
 
-def tok(token_type: str):
+def tok(token_type: str, id_: str= "") -> TokenElement:
     """Create a TokenElement for the specified token type.
 
     This is a convenience factory function for creating TokenElements.
 
     Args:
         token_type (str): The type of token to create an element for.
+        id_ (str): An optional identifier for the grammar element.
 
     Returns:
         TokenElement: A new TokenElement for the specified token type.
     """
-    return TokenElement(token_type)
+    return TokenElement(token_type, id_)
 
 
 class Sequence(GrammarElement):
@@ -669,7 +691,8 @@ class Rule(GrammarElement):
     def __init__(self,
                  grammar: 'Grammar',
                  name: str,
-                 expander: Callable[['Grammar'], GrammarElement]
+                 expander: Callable[['Grammar'], GrammarElement],
+                 id_: str= ""
                  ):
         """Initialize a rule with its definition.
 
@@ -678,8 +701,9 @@ class Rule(GrammarElement):
             name (str): The name identifier for this rule.
             expander (Callable): Function that returns the rule's grammar element
                                when called with the grammar as argument.
+            id_ (str): An optional identifier for the grammar element.
         """
-        GrammarElement.__init__(self)
+        GrammarElement.__init__(self, id_)
         self.grammar = grammar
         self.name = name
         self.expander = expander
@@ -688,7 +712,15 @@ class Rule(GrammarElement):
         self.end_node = RuleEndNode(self)
 
     def clone(self) -> GrammarElement:
-        return Rule(self.grammar, self.name, self.expander)
+        return Rule(self.grammar, self.name, self.expander, self.id)
+
+    def set_id(self, id_: str) -> 'Rule':
+        """Set the identifier for this grammar element.
+        Args:
+            id_ (str): The identifier to set.
+        """
+        self.id = id_
+        return self
 
     def get_in_node(self) -> GrammarNode:
         """Get the input node (the rule start node).
