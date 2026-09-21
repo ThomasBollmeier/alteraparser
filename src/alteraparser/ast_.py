@@ -77,6 +77,11 @@ class AstStrWriter:
 
     def _write_ast(self, ast: Ast):
         id_str = f' id="{ast.id}"' if ast.id else ''
+        attr_str = ""
+        for name, value in ast.attributes.items():
+            attr_str += f' {name}="{value}"'
+        if attr_str:
+            id_str  += attr_str
         if ast.value is None:
             if ast.children:
                 self._write_line(f'<{ast.name}{id_str}>')

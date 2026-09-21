@@ -1,7 +1,6 @@
-from tests.grammar4test import *
-from alteraparser.lexer_grammar import LexerGrammar
 from alteraparser.lexer import Lexer
 from alteraparser.token_ import Token
+from tests.grammar4test import *
 
 
 def test_lexer_simple_expr():
