@@ -10,16 +10,25 @@ def test_parser():
     parser = TextParser(g, lg)
 
     source = """
+        tokens {
+            WSPACE regex(\s+) ignore;
+            IDENTIFIER regex([a-zA-Z_][a-zA-Z0-9_]*);
+            LBRACE regex([{]);    
+            RBRACE regex([}]);
+            LPAREN regex([(]);
+            RPAREN regex([)]);
+        }
+        
         -- Class Declaration
-        class_decl -> CLASS name#IDENTIFIER LBRACE 
+        class_decl -> 'class' name#IDENTIFIER LBRACE 
             attrs_decl
             methods_decl
             RBRACE;
-        attrs_decl -> ATTRS LBRACE 
-            (ATTR attr#IDENTIFIER)+
+        attrs_decl -> 'attrs' LBRACE 
+            ('attr' attr#IDENTIFIER)+
         RBRACE;
-        methods_decl -> METHODS LBRACE
-            (METHOD method#IDENTIFIER LPAREN RPAREN)+
+        methods_decl -> 'methods' LBRACE
+            ('method' method#IDENTIFIER LPAREN RPAREN)+
         RBRACE; 
         """
 

@@ -5,7 +5,49 @@ def create_meta_grammar() -> Grammar:
     grammar = Grammar()
     lg = MetaLexerGrammar()
 
-    @rule(grammar, "rule_defs", is_start_rule=True)
+    @rule(grammar, "grammar", is_start_rule=True)
+    def _grammar(g):
+        return seq(
+            g.token_type_defs,
+            g.rule_defs,
+        )
+
+    @rule(grammar, "token_type_defs")
+    def _token_type_defs(g):
+        return seq(
+            tok(lg.TOKENS),
+            tok(lg.LBRACE),
+            many(g.token_type_def.set_id("token_type_def")),
+            tok(lg.RBRACE),
+        )
+    @ast_transformer(grammar, "token_type_defs")
+    def _transform_token_type_defs(ast):
+        ret = Ast("token_type_defs")
+        for child in ast.get_children_by_id("token_type_def"):
+            ret.add_child(child)
+        return ret
+
+    @rule(grammar, "token_type_def")
+    def _token_type_def(g):
+        return seq(
+            tok(lg.TOKEN_TYPE),
+            tok(lg.REGEX),
+            opt(tok(lg.IGNORE)),
+            tok(lg.SEMICOLON),
+        )
+    @ast_transformer(grammar, "token_type_def")
+    def _transform_token_type_def(ast):
+        name = ast[0].value
+        regex = ast[1].value[6:-1] # regex(...)
+        ignore = len(ast.get_children()) == 4
+        ret = Ast("token_type_def")
+        ret.set_attr("name", name)
+        ret.set_attr("regex", regex)
+        if ignore:
+            ret.set_attr("ignore", "true")
+        return ret
+
+    @rule(grammar, "rule_defs")
     def _rule_defs(g):
         return one_or_more(g.rule_def)
 
@@ -97,6 +139,7 @@ def create_meta_grammar() -> Grammar:
             choice(
                 tok(lg.TOKEN_TYPE, "token_type"),
                 tok(lg.IDENT, "rule"),
+                tok(lg.KEYWORD, "keyword"),
             )
         )
     @ast_transformer(grammar, "atom")
@@ -107,7 +150,11 @@ def create_meta_grammar() -> Grammar:
             ret = Ast("token_type", token_type_ast.value)
         else:
             rule_ast = ast.get_child_by_id("rule")
-            ret = Ast("rule", rule_ast.value)
+            if rule_ast:
+                ret = Ast("rule", rule_ast.value)
+            else:
+                keyword_ast = ast.get_child_by_id("keyword")
+                ret = Ast("keyword", keyword_ast.value[1:-1])
         ret.id = ""
         if id_ast:
             ret.set_attr("identifier", id_ast.value)
