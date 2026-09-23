@@ -1,13 +1,9 @@
-from alteraparser.meta.lexer_grammar import LexerGrammar
-from alteraparser.meta.grammar import create_meta_grammar
-from alteraparser.parser import TextParser
+from alteraparser.meta.parser import Parser as MetaParser
 from alteraparser.ast_ import AstStrWriter
 
 
 def test_parser():
-    lg = LexerGrammar()
-    g = create_meta_grammar()
-    parser = TextParser(g, lg)
+    parser = MetaParser()
 
     source = """
         tokens {
@@ -20,16 +16,18 @@ def test_parser():
         }
         
         -- Class Declaration
-        class_decl -> 'class' name#IDENTIFIER LBRACE 
+        class_decl -> 'class' name#IDENTIFIER block< 
             attrs_decl
             methods_decl
-            RBRACE;
-        attrs_decl -> 'attrs' LBRACE 
+            >;
+        attrs_decl -> 'attrs' block< 
             ('attr' attr#IDENTIFIER)+
-        RBRACE;
-        methods_decl -> 'methods' LBRACE
+        >;
+        methods_decl -> 'methods' block<
             ('method' method#IDENTIFIER LPAREN RPAREN)+
-        RBRACE; 
+        >; 
+        
+        block<body> -> LBRACE body RBRACE | 'begin' body 'end';
         """
 
     ast = parser.parse_text(source)

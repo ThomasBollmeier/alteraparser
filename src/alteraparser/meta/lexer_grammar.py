@@ -22,6 +22,9 @@ class LexerGrammar(AlteraLexerGrammar):
         self.add_rule("RPAREN", r'\)')
         self.add_rule("LBRACE", r'\{')
         self.add_rule("RBRACE", r'\}')
+        self.add_rule("LBRACKET", r'<')
+        self.add_rule("RBRACKET", r'>')
+        self.add_rule("COMMA", r',')
         self.add_rule("HASH", r'#')
         self.add_rule("KEYWORD", r"'[^']+'")
 

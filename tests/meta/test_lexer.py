@@ -7,10 +7,11 @@ def test_lexer():
 
     source = """
     -- Class Declaration
-    class_decl -> 'class' name#IDENTIFIER LBRACE 
+    class_decl -> 'class' name#IDENTIFIER block< 
         attr_decl+
-        RBRACE;
+        >;
     attr_decl -> 'attr' name#IDENTIFIER; 
+    block<body> -> LBRACE body RBRACE | 'begin' body 'end';
     """
     lexer.set_input(source)
 

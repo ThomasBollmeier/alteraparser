@@ -9,11 +9,12 @@ class Ast:
         self.children: list[Ast] = []
         self.attributes: dict[str, Any] = {}
 
-    def clone(self) -> 'Ast':
+    def clone(self, deep=True) -> 'Ast':
         cloned_ast = Ast(self.name, self.value, self.id)
         cloned_ast.attributes = self.attributes.copy()
-        for child in self.children:
-            cloned_ast.add_child(child.clone())
+        if deep:
+            for child in self.children:
+                cloned_ast.add_child(child.clone())
         return cloned_ast
 
     def add_child(self, child: 'Ast'):

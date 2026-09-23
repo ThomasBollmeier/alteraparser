@@ -28,7 +28,7 @@ def create_meta_grammar() -> Grammar:
         return ret
 
     @rule(grammar, "token_type_def")
-    def _token_type_def(g):
+    def _token_type_def(_):
         return seq(
             tok(lg.TOKEN_TYPE),
             tok(lg.REGEX),
@@ -54,20 +54,38 @@ def create_meta_grammar() -> Grammar:
     @rule(grammar, "rule_def")
     def _rule_def(g):
         return seq(
-            tok(lg.IDENT, "rule_def"),
+            tok(lg.IDENT, "name"),
+            opt(seq(
+                tok(lg.LBRACKET),
+                seq(
+                    tok(lg.IDENT, "param"),
+                    many(seq(
+                        tok(lg.COMMA),
+                        tok(lg.IDENT, "param"),
+                    ))
+                ),
+                tok(lg.RBRACKET),
+            )),
             tok(lg.ARROW),
             g.rhs.set_id("rhs"),
             tok(lg.SEMICOLON)
         )
     @ast_transformer(grammar, "rule_def")
     def _transform_rule_def(ast):
-        rule_name = ast.get_child_by_id("rule_def").value
-        new_ast = Ast("rule_def")
-        new_ast.set_attr("name", rule_name)
-        for child in ast.get_children_by_id("rhs"):
-            new_ast.add_child(child)
+        name = ast.get_child_by_id("name").value
+        params = ast.get_children_by_id("param")
+        if not params:
+            new_ast = Ast("rule_def")
+        else:
+            new_ast = Ast("macro_def")
+            params_ast = Ast("parameters")
+            new_ast.add_child(params_ast)
+            for param in params:
+                params_ast.add_child(Ast("param", param.value))
+        new_ast.set_attr("name", name)
+        rhs = ast.get_children_by_id("rhs")[0]
+        new_ast.add_child(rhs)
         return new_ast
-
 
     @rule(grammar, "rhs")
     def _rhs(g):
@@ -133,17 +151,31 @@ def create_meta_grammar() -> Grammar:
             return children[1]
 
     @rule(grammar, "atom")
-    def _atom(_):
+    def _atom(g):
         return seq(
             opt(seq(tok(lg.IDENT, "id"), tok(lg.HASH))),
             choice(
                 tok(lg.TOKEN_TYPE, "token_type"),
-                tok(lg.IDENT, "rule"),
+                seq(
+                    tok(lg.IDENT, "rule"),
+                    opt(seq(
+                        tok(lg.LBRACKET),
+                        seq(
+                            g.rhs.set_id("arg"),
+                            many(seq(
+                                tok(lg.COMMA),
+                                g.rhs.set_id("arg"),
+                            ))
+                        ),
+                        tok(lg.RBRACKET),
+                    )),
+                ),
                 tok(lg.KEYWORD, "keyword"),
             )
         )
     @ast_transformer(grammar, "atom")
     def _transform_atom(ast):
+        is_macro_call = False
         id_ast = ast.get_child_by_id("id")
         token_type_ast = ast.get_child_by_id("token_type")
         if token_type_ast:
@@ -151,13 +183,23 @@ def create_meta_grammar() -> Grammar:
         else:
             rule_ast = ast.get_child_by_id("rule")
             if rule_ast:
-                ret = Ast("rule", rule_ast.value)
+                args = ast.get_children_by_id("arg")
+                is_macro_call = len(args) > 0
+                if not is_macro_call:
+                    ret = Ast("rule", rule_ast.value)
+                else:
+                    ret = Ast("macro_call", rule_ast.value)
+                    for arg in args:
+                        ret.add_child(arg)
             else:
                 keyword_ast = ast.get_child_by_id("keyword")
                 ret = Ast("keyword", keyword_ast.value[1:-1])
         ret.id = ""
         if id_ast:
-            ret.set_attr("identifier", id_ast.value)
+            if not is_macro_call:
+                ret.set_attr("identifier", id_ast.value)
+            else:
+                raise Exception("macro calls cannot be labeled")
         return ret
 
     @rule(grammar, "multiplier")
