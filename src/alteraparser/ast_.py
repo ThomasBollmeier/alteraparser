@@ -112,3 +112,15 @@ class AstStrWriter:
     def _write_line(self, text: str):
         self._write(text)
         self._output += '\n'
+
+class AstWalker:
+    def on_enter(self, ast: Ast):
+        pass
+    def on_exit(self, ast: Ast):
+        pass
+
+def walk(ast: Ast, walker: AstWalker):
+    walker.on_enter(ast)
+    for child in ast.children:
+        walk(child, walker)
+    walker.on_exit(ast)
