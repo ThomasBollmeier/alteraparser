@@ -10,7 +10,19 @@ class CodeGenerator:
         self._lines = []
         self._line = ""
 
-    def generate_lexer_grammar(self, name: str, ast: Ast) -> List[str]:
+    def generate_code(self, lexer_grammar_class_name: str, ast: Ast) -> List[str]:
+        self._generate_import_statements()
+        self._generate_lexer_grammar(lexer_grammar_class_name, ast)
+
+        if self._line:
+            self._lines.append(self._line)
+        return self._lines[:]
+
+    def _generate_import_statements(self):
+        self._write_line("from alteraparser.lexer_grammar import LexerGrammar")
+        self._write_line()
+
+    def _generate_lexer_grammar(self, name: str, ast: Ast):
         kw_finder = KeywordFinder()
         walk(ast, kw_finder)
         keyword_map = kw_finder.get_keyword_map()
@@ -41,11 +53,6 @@ class CodeGenerator:
 
         self._dedent()
         self._dedent()
-
-        if self._line:
-            self._lines.append(self._line)
-
-        return self._lines[:]
 
     def _indent(self):
         self._indent_level += 1

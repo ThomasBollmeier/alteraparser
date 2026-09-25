@@ -33,6 +33,6 @@ def test_codegen():
 
     assert ast is not None
 
-    lines = CodeGenerator().generate_lexer_grammar("TestLexerGrammar", ast)
+    lines = CodeGenerator().generate_code("TestLexerGrammar", ast)
     for line in lines:
         print(line)

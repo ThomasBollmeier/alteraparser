@@ -821,9 +821,13 @@ class Grammar:
         self.rules = {}
         self.ast_transformers = {}
         self.start_rule_name: Option[str] = None
-        self.start_element = NormalElement(GrammarNode(GrammarNodeType.NORMAL))
-        self.end_element = NormalElement(GrammarNode(GrammarNodeType.NORMAL))
+        self.start_element = self._create_normal()
+        self.end_element = self._create_normal()
         self.syntax_graph_created = False
+
+    @staticmethod
+    def _create_normal() -> NormalElement:
+        return NormalElement(GrammarNode(GrammarNodeType.NORMAL))
 
     def set_start_rule(self, name: str):
         """Set the start rule for this grammar.
@@ -853,6 +857,29 @@ class Grammar:
             connect(self.start_element, start_rule)
             connect(start_rule, self.end_element)
             self.syntax_graph_created = True
+        return self.start_element.get_in_node()
+
+    def create_syntax_graph_for_rule(self, rule_name: str) -> GrammarNode:
+        """Create a syntax graph rooted at a specific rule.
+
+        This method builds a partial syntax graph that starts from the requested
+        rule instead of the grammar's global start rule. It connects the start node
+        to the chosen rule and to the end node, and returns the rule's entry node
+        so the graph can be used for targeted parsing or analysis.
+
+        Args:
+            rule_name (str): The name of the rule to use as the root of the graph.
+
+        Returns:
+            GrammarNode: The start node of the specified rule within the newly
+                created syntax graph.
+        """
+        if self.syntax_graph_created:
+            raise ValueError("Syntax graph has already been created. Cannot create a new one.")
+        self.syntax_graph_created = True
+        rule_ = self.get_rule(rule_name)
+        connect(self.start_element, rule_)
+        connect(rule_, self.end_element)
         return self.start_element.get_in_node()
 
     def find_path_to_end(self, node: GrammarNode) -> Option[List[GrammarNode]]:

@@ -27,7 +27,7 @@ class Parser:
         """
         self._grammar = grammar
 
-    def parse(self, tokens: TokenStream) -> Optional[Ast]:
+    def parse(self, tokens: TokenStream, rule_name: str="") -> Optional[Ast]:
         """Parse a stream of tokens according to the grammar and return an AST.
 
         This method processes tokens sequentially, maintaining multiple possible parse
@@ -38,6 +38,8 @@ class Parser:
         Args:
             tokens (TokenStream): A stream of tokens to be parsed. The stream should
                                 contain tokens that match the grammar's terminal symbols.
+            rule_name (str): The name of the rule to use as the root of the parse.
+                             If empty, the grammar's start rule is used.
 
         Returns:
             Ast: The root node of the Abstract Syntax Tree representing the parsed
@@ -49,7 +51,10 @@ class Parser:
                         if the parse is ambiguous (multiple valid interpretations),
                         or if the parse is incomplete (cannot reach the grammar end).
         """
-        start_node = self._grammar.create_syntax_graph()
+        if rule_name:
+            start_node = self._grammar.create_syntax_graph_for_rule(rule_name)
+        else:
+            start_node = self._grammar.create_syntax_graph()
         matched_paths = [[start_node]]
         processed_tokens = []
 
@@ -173,7 +178,7 @@ class TextParser(Parser):
         super().__init__(grammar)
         self._lexer_grammar = lexer_grammar
 
-    def parse_text(self, text: str) -> Optional[Ast]:
+    def parse_text(self, text: str, rule_name: str="") -> Optional[Ast]:
         """Parse raw text input to produce an Abstract Syntax Tree (AST).
 
         This method first tokenizes the input text using the defined lexer grammar,
@@ -181,6 +186,8 @@ class TextParser(Parser):
 
         Args:
             text (str): The raw text input to be parsed.
+            rule_name (str): The name of the rule to use as the root of the parse.
+                             If empty, the grammar's start rule is used.
 
         Returns:
             Ast: The root node of the Abstract Syntax Tree representing the parsed
@@ -190,4 +197,4 @@ class TextParser(Parser):
             SyntaxError: If there are lexical or syntactical errors during parsing.
         """
         lexer = Lexer(self._lexer_grammar, text)
-        return self.parse(lexer)
+        return self.parse(lexer, rule_name)
