@@ -29,10 +29,10 @@ def test_codegen():
     """
 
     parser = Parser()
-    ast = parser.parse_text(source)
+    ast = parser.parse(source)
 
     assert ast is not None
 
-    lines = CodeGenerator().generate_code("TestLexerGrammar", ast)
+    lines = CodeGenerator().generate_code("MyLang", ast)
     for line in lines:
         print(line)

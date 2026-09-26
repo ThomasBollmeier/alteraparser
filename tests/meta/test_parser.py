@@ -30,7 +30,7 @@ def test_parser():
         block<body> -> LBRACE body RBRACE | 'begin' body 'end';
         """
 
-    ast = parser.parse_text(source)
+    ast = parser.parse(source)
 
     assert ast is not None
 

@@ -140,7 +140,7 @@ def create_meta_grammar() -> Grammar:
     def _element(g):
         return choice(
             g.atom,
-            seq(tok(lg.LPAREN), g.branch, tok(lg.RPAREN)),
+            seq(tok(lg.LPAREN), g.rhs, tok(lg.RPAREN)),
         )
     @ast_transformer(grammar, "element")
     def _transform_element(ast):

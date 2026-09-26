@@ -5,13 +5,13 @@ from alteraparser.meta.lexer_grammar import LexerGrammar
 from alteraparser.meta.grammar import create_meta_grammar
 
 
-class Parser(AlteraTextParser):
+class Parser():
 
     def __init__(self):
-        AlteraTextParser.__init__(self, create_meta_grammar(), LexerGrammar())
+        self._parser = AlteraTextParser(create_meta_grammar(), LexerGrammar())
 
-    def parse_text(self, text):
-        ast = AlteraTextParser.parse_text(self, text)
+    def parse(self, text: str):
+        ast = self._parser.parse_text(text, rule_name="")
         if not ast:
             return ast
         macro_defs = self._read_macro_defs(ast)
