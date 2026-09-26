@@ -1,5 +1,16 @@
 from typing import List, Dict
 from alteraparser.ast_ import Ast, walk, AstWalker
+from alteraparser.meta.parser import Parser
+
+def generate_python_module_code(grammar_code: str,
+                         language_name: str) -> str:
+    parser = Parser()
+    ast = parser.parse(grammar_code)
+    if not ast:
+        raise Exception("Failed to parse grammar code")
+    code_generator = CodeGenerator()
+    lines = code_generator.generate_code(language_name, ast)
+    return "\n".join(lines)
 
 
 class CodeGenerator:

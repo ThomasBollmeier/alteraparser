@@ -1,11 +1,9 @@
 import types
 import sys
-from typing import List
-from alteraparser.meta.parser import Parser
-from alteraparser.meta.codegen import CodeGenerator
-from alteraparser.ast_ import AstStrWriter
+from alteraparser.meta.codegen import generate_python_module_code
+from alteraparser.ast_ import AstTransformer, AstStrWriter, Ast
 
-def test_codegen():
+def test_code_evaluation():
 
     source = """
         tokens {
@@ -19,19 +17,15 @@ def test_codegen():
             RPAREN regex([)]);
         }
         
-        expr -> term ((op#PLUS | op#MINUS) term)*;
-        term -> factor ((op#STAR | op#SLASH) factor)*;
+        expr -> term ((PLUS | MINUS) term)*;
+        term -> factor ((STAR | SLASH) factor)*;
         factor -> NUMBER | LPAREN expr RPAREN;
 
     """
 
-    parser = Parser()
-    ast = parser.parse(source)
-    assert ast is not None
+    code = generate_python_module_code(source, "Expr")
 
-    lines = CodeGenerator().generate_code("Expr", ast)
-
-    mod = create_parser_module("expr_mod", lines)
+    mod = create_parser_module("expr_mod", code)
     sys.modules["expr_mod"] = mod
 
     from expr_mod import ExprParser
@@ -40,15 +34,39 @@ def test_codegen():
     print(expr_parser)
 
     expr_code = "2 + 5 * (4 + 4)"
-    expr_ast = expr_parser.parse_expr(expr_code)
-    assert expr_ast is not None
+    ast = expr_parser.parse_expr(expr_code)
+    assert ast is not None
+
+    ast = parse_tree_to_ast(ast)
 
     writer = AstStrWriter()
-    ast_str = writer.write_ast_to_str(expr_ast)
+    ast_str = writer.write_ast_to_str(ast)
     print(ast_str)
 
-def create_parser_module(module_name: str, lines: List[str]) -> types.ModuleType:
-    generated_code = "\n".join(lines)
+def create_parser_module(module_name: str, code: str) -> types.ModuleType:
     module = types.ModuleType(module_name)
-    exec(generated_code, module.__dict__)
+    exec(code, module.__dict__)
     return module
+
+def parse_tree_to_ast(ast):
+    transformer = AstTransformer()
+
+    def single_child(ast: Ast) -> Ast:
+        if len(ast.children) == 1:
+            return ast.children[0]
+        return ast
+
+    def factor_transformer(ast: Ast) -> Ast:
+        match len(ast.children):
+            case 1:
+                return ast.children[0]
+            case 3:
+                return ast.children[1]
+            case _:
+                raise Exception("Invalid factor node")
+
+    transformer.register_transformer("expr", single_child)
+    transformer.register_transformer("term", single_child)
+    transformer.register_transformer("factor", factor_transformer)
+
+    return transformer.transform(ast)

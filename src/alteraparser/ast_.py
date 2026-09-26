@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 
 class Ast:
@@ -124,3 +124,25 @@ def walk(ast: Ast, walker: AstWalker):
     for child in ast.children:
         walk(child, walker)
     walker.on_exit(ast)
+
+class AstTransformer:
+    def __init__(self):
+        self._transformers: dict[str, Callable[[Ast], Ast]] = {}
+
+    def register_transformer(self, name: str, transformer: Callable[[Ast], Ast]):
+        self._transformers[name] = transformer
+
+    def transform(self, ast: Ast) -> Ast:
+        for idx, child in enumerate(ast.children):
+            transformed_child = self.transform(child)
+            ast.children[idx] = transformed_child
+
+        return self._transformers[ast.name](ast) if ast.name in self._transformers else ast
+
+
+def transform_ast(ast_transformer: AstTransformer, ast_name: str):
+    def wrapper(fn: Callable[[Ast], Ast]) -> Callable[[Ast], Ast]:
+        ast_transformer.register_transformer(ast_name, fn)
+        return fn
+
+    return wrapper
