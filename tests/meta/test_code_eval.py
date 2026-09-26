@@ -33,7 +33,7 @@ def test_code_evaluation():
     expr_parser = ExprParser()
     print(expr_parser)
 
-    expr_code = "2 + 5 * (4 + 4)"
+    expr_code = "2 + 5 * (7 - 3 + 4)"
     ast = expr_parser.parse_expr(expr_code)
     assert ast is not None
 
@@ -51,11 +51,6 @@ def create_parser_module(module_name: str, code: str) -> types.ModuleType:
 def parse_tree_to_ast(ast):
     transformer = AstTransformer()
 
-    def single_child(ast: Ast) -> Ast:
-        if len(ast.children) == 1:
-            return ast.children[0]
-        return ast
-
     def factor_transformer(ast: Ast) -> Ast:
         match len(ast.children):
             case 1:
@@ -65,8 +60,33 @@ def parse_tree_to_ast(ast):
             case _:
                 raise Exception("Invalid factor node")
 
-    transformer.register_transformer("expr", single_child)
-    transformer.register_transformer("term", single_child)
+    def binary_op_transformer(ast: Ast) -> Ast:
+        if len(ast.children) == 1:
+            return ast.children[0]
+        else:
+            left = ast.children[0]
+            for i in range(1, len(ast.children), 2):
+                op = ast.children[i]
+                right = ast.children[i + 1]
+                match op.value:
+                    case "+":
+                        name = "add"
+                    case "-":
+                        name = "sub"
+                    case "*":
+                        name = "mul"
+                    case "/":
+                        name = "div"
+                    case _:
+                        raise Exception(f"Unknown operator: {op.value}")
+                new_node = Ast(name=name)
+                new_node.add_child(left)
+                new_node.add_child(right)
+                left = new_node
+            return left
+
+    transformer.register_transformer("expr", binary_op_transformer)
+    transformer.register_transformer("term", binary_op_transformer)
     transformer.register_transformer("factor", factor_transformer)
 
     return transformer.transform(ast)
