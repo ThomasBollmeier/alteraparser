@@ -37,14 +37,3 @@ def test_cli_reads_from_file_and_writes_to_outfile(tmp_path):
     assert "class DemoLangLexerGrammar(LexerGrammar):" in generated
     assert "class DemoLangParser:" in generated
 
-
-def test_cli_prints_version(capsys):
-    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
-    version = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
-
-    with pytest.raises(SystemExit) as ex:
-        main(["--version"])
-
-    assert ex.value.code == 0
-    out = capsys.readouterr().out.strip()
-    assert out.split()[-1] == version

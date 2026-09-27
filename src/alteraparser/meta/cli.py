@@ -1,30 +1,12 @@
 from argparse import ArgumentParser
 from pathlib import Path
 import sys
-import tomllib
 
 from alteraparser.meta.codegen import generate_python_module_code
-
-
-def _read_project_version() -> str:
-    for parent in Path(__file__).resolve().parents:
-        pyproject = parent / "pyproject.toml"
-        if pyproject.exists():
-            content = pyproject.read_text(encoding="utf-8")
-            data = tomllib.loads(content)
-            return data["project"]["version"]
-    raise FileNotFoundError("pyproject.toml not found")
-
 
 def _create_argument_parser() -> ArgumentParser:
     parser = ArgumentParser(
         description="Generate Python parser code from an Alteraparser grammar."
-    )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=f"%(prog)s {_read_project_version()}",
     )
     parser.add_argument(
         "infile",

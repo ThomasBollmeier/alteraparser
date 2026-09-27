@@ -80,7 +80,6 @@ class CodeGenerator:
         self._write_line(f"def create_{snake_name}_grammar() -> Grammar:")
         self._indent()
         self._write_line("grammar = Grammar()")
-        self._write_line(f"lg = {language_name}LexerGrammar()")
         self._write_line()
 
         grammar_printer = GrammarPrinter(self, keyword_map_inv)
@@ -237,15 +236,15 @@ class GrammarPrinter(AstWalker):
                 keyword = ast.value
                 token_type = self._keyword_map[keyword]
                 if not identifier:
-                    self._write_line(f"tok(lg.{token_type}){self._delim()} # <-- '{keyword}'")
+                    self._write_line(f"tok(\"{token_type}\"){self._delim()} # <-- '{keyword}'")
                 else:
-                    self._write_line(f"tok(lg.{token_type}, \"{identifier}\"){self._delim()} # <-- '{keyword}'")
+                    self._write_line(f"tok(\"{token_type}\", \"{identifier}\"){self._delim()} # <-- '{keyword}'")
             case "token_type":
                 token_type = ast.value
                 if not identifier:
-                    self._write_line(f"tok(lg.{token_type}){self._delim()}")
+                    self._write_line(f"tok(\"{token_type}\"){self._delim()}")
                 else:
-                    self._write_line(f"tok(lg.{token_type}, \"{identifier}\"){self._delim()}")
+                    self._write_line(f"tok(\"{token_type}\", \"{identifier}\"){self._delim()}")
 
     def on_exit(self, ast: Ast):
         if self._in_macro_def:
