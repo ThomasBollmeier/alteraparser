@@ -137,7 +137,10 @@ class AstTransformer:
             transformed_child = self.transform(child)
             ast.children[idx] = transformed_child
 
-        return self._transformers[ast.name](ast) if ast.name in self._transformers else ast
+        saved_id = ast.id
+        transformed_ast = self._transformers[ast.name](ast) if ast.name in self._transformers else ast
+        transformed_ast.id = saved_id
+        return transformed_ast
 
 
 def transform_ast(ast_transformer: AstTransformer, ast_name: str):
