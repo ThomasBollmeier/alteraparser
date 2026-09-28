@@ -192,18 +192,13 @@ class GrammarPrinter(AstWalker):
             multiplier = ast.get_attr("multiplier")
             match multiplier:
                 case "?":
-                    self._write("opt(")
+                    self._write_line("opt(")
                 case "*":
-                    self._write("many(")
+                    self._write_line("many(")
                 case "+":
-                    self._write("one_or_more(")
-            if len(ast.children) > 1:
-                self._write_line("seq(")
-            else:
-                self._write_line("")
+                    self._write_line("one_or_more(")
             self._open_call(len(ast.children))
             self._indent()
-            return
 
         identifier = ast.get_attr("identifier") if ast.has_attr("identifier") else None
 
@@ -252,15 +247,6 @@ class GrammarPrinter(AstWalker):
                 self._in_macro_def = False
             return
 
-        if ast.has_attr("multiplier"):
-            self._dedent()
-            self._close_call()
-            if len(ast.children) > 1:
-                self._write_line(f")){self._delim()}")
-            else:
-                self._write_line(f"){self._delim()}")
-            return
-
         match ast.name:
             case "rule_def":
                 self._dedent()
@@ -274,6 +260,11 @@ class GrammarPrinter(AstWalker):
                 self._dedent()
                 self._close_call()
                 self._write_line(f"){self._delim()}")
+
+        if ast.has_attr("multiplier"):
+            self._dedent()
+            self._close_call()
+            self._write_line(f"){self._delim()}")
 
     def _open_call(self, num_args: int):
         self._call_args.append((0, num_args))

@@ -22,7 +22,7 @@ def test_codegen():
             ('attr' attr#IDENTIFIER)+
         >;
         methods_decl -> 'methods' block<
-            ('method' method#IDENTIFIER LPAREN RPAREN)+
+            ('method' method#IDENTIFIER LPAREN param#IDENTIFIER* RPAREN)+
         >; 
 
         block<body> -> LBRACE body RBRACE | 'begin' body 'end';

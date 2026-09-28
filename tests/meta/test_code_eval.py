@@ -25,6 +25,8 @@ def test_code_evaluation():
 
     code = generate_python_module_code(source, "Expr")
 
+    print(code)
+
     mod = create_parser_module("expr_mod", code)
     sys.modules["expr_mod"] = mod
 
